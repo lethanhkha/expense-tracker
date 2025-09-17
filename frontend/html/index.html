@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expense Tracker</title>
+
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/components.css" />
+    <link rel="stylesheet" href="../css/pages.css" />
+  </head>
+  <body>
+    <div class="container">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="avatar"></div>
+          <div class="">
+            <div class="name">Tuyếtt Ngàa</div>
+            <div class="muted">Tài khoản cao cấp</div>
+          </div>
+        </div>
+        <nav class="nav">
+          <button class="tab-btn active" data-tab="dashboard">Trang chủ</button>
+          <button class="tab-btn" data-tab="income">Khoản thu</button>
+          <button class="tab-btn" data-tab="expense">Khoản chi</button>
+          <button class="tab-btn" data-tab="tip">Tiền tip</button>
+        </nav>
+      </aside>
+      <main class="content">
+        <section id="dashboard" class="tab-page">
+          <div class="kpis">
+            <div class="kpi balance">
+              <div class="icon">💼</div>
+              <div>
+                <div class="label">Tổng số dư</div>
+                <div class="value" id="kpi-balance">0đ</div>
+              </div>
+            </div>
+            <div class="kpi income">
+              <div class="icon">🟠</div>
+              <div>
+                <div class="label">Tổng thu nhập</div>
+                <div class="value" id="kpi-income">0đ</div>
+              </div>
+            </div>
+            <div class="kpi expense">
+              <div class="icon">🔴</div>
+              <div>
+                <div class="label">Tổng chi tiêu</div>
+                <div class="value" id="kpi-expense">0đ</div>
+              </div>
+            </div>
+          </div>
+          <div class="kpi tip">
+            <div class="icon">💖</div>
+            <div>
+              <div class="label">Tổng tiền tip</div>
+              <div class="value" id="kpi-tip">0đ</div>
+            </div>
+          </div>
+        </section>
+        <section id="income" class="tab-page hidden">
+          <div class="card">
+            <div class="inner">
+              <div class="header">
+                <div class="title">Danh sách khoản thu</div>
+                <button class="btn primary btn-add" id="btn-add-income">
+                  + Thêm khoản thu
+                </button>
+              </div>
+              <ul id="income-list"></ul>
+            </div>
+          </div>
+        </section>
+        <div class="modal" id="modal-income">
+          <div class="dialog">
+            <div class="inner">
+              <div class="header">
+                <div class="title" id="income-modal-title">Thêm khoản thu</div>
+                <button class="btn ghost" data-close>✕</button>
+              </div>
+              <form class="form" id="income-form">
+                <input type="hidden" id="income-id" />
+                <div class="field">
+                  <label>Nguồn thu</label
+                  ><input
+                    class="input"
+                    id="income-source"
+                    placeholder="Freelance, Salary, etc"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label>Số tiền</label
+                  ><input
+                    class="input"
+                    id="income-amount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label>Ngày</label
+                  ><input class="input" id="income-date" type="date" required />
+                </div>
+                <div class="actions">
+                  <button type="button" class="btn ghost" data-close>Huỷ</button
+                  ><button class="btn primary" type="submit">Lưu</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <section id="expense" class="tab-page hidden">
+          <div class="card">
+            <div class="inner">
+              <div class="header">
+                <div class="title">Danh sách khoản chi</div>
+                <button class="btn primary btn-add" id="btn-add-expense">
+                  + Thêm khoản chi
+                </button>
+              </div>
+              <ul id="expense-list"></ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Modal Expense -->
+        <div class="modal" id="modal-expense">
+          <div class="dialog">
+            <div class="inner">
+              <div class="header">
+                <div class="title" id="expense-modal-title">Thêm khoản chi</div>
+                <button class="btn ghost" data-close>✕</button>
+              </div>
+              <form class="form" id="expense-form">
+                <input type="hidden" id="expense-id" />
+                <div class="field">
+                  <label>Khoản chi</label>
+                  <input
+                    class="input"
+                    id="expense-source"
+                    placeholder="Food, Bills, etc"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label>Số tiền</label>
+                  <input
+                    class="input"
+                    id="expense-amount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label>Ngày</label>
+                  <input class="input" id="expense-date" type="date" required />
+                </div>
+                <div class="actions">
+                  <button type="button" class="btn ghost" data-close>
+                    Huỷ
+                  </button>
+                  <button class="btn primary" type="submit">Lưu</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <section id="tip" class="tab-page hidden">
+          <div class="card">
+            <div class="inner">
+              <div class="header">
+                <div class="title">Danh sách tiền tip</div>
+                <button class="btn primary btn-add" id="btn-add-tip">
+                  + Thêm tip
+                </button>
+              </div>
+              <ul id="tip-list"></ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Modal Tip -->
+        <div class="modal" id="modal-tip">
+          <div class="dialog">
+            <div class="inner">
+              <div class="header">
+                <div class="title" id="tip-modal-title">Thêm tip</div>
+                <button class="btn ghost" data-close>✕</button>
+              </div>
+              <form class="form" id="tip-form">
+                <input type="hidden" id="tip-id" />
+                <div class="field">
+                  <label>Số tiền</label>
+                  <input
+                    class="input"
+                    id="tip-amount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label>Ngày</label>
+                  <input class="input" id="tip-date" type="date" required />
+                </div>
+                <div class="field">
+                  <label>Khách hàng</label>
+                  <input
+                    class="input"
+                    id="tip-customer"
+                    placeholder="Tên khách..."
+                  />
+                </div>
+                <div class="field">
+                  <label>Ghi chú</label>
+                  <input
+                    class="input"
+                    id="tip-note"
+                    placeholder="Ghi chú thêm (tuỳ chọn)"
+                  />
+                </div>
+                <div class="actions">
+                  <button type="button" class="btn ghost" data-close>
+                    Huỷ
+                  </button>
+                  <button class="btn primary" type="submit">Lưu</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+  <!-- Bottom Nav (mobile) -->
+  <nav class="bottom-nav" role="tablist" aria-label="Điều hướng">
+    <button
+      class="tab-btn icon-only active"
+      data-tab="dashboard"
+      aria-label="Trang chủ"
+    >
+      <span class="nav-icon">📋</span>
+    </button>
+    <button class="tab-btn icon-only" data-tab="income" aria-label="Khoản thu">
+      <span class="nav-icon">➕</span>
+    </button>
+    <button class="tab-btn icon-only" data-tab="expense" aria-label="Khoản chi">
+      <span class="nav-icon">💸</span>
+    </button>
+    <button class="tab-btn icon-only" data-tab="tip" aria-label="Tiền tip">
+      <span class="nav-icon">💖</span>
+    </button>
+  </nav>
+  <script type="module" src="../js/main.js"></script>
+</html>

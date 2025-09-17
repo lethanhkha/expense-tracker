@@ -1,0 +1,354 @@
+/* ==================== Sidebar ==================== */
+.sidebar {
+  background-color: var(--panel);
+  /* width: 15%; */
+  width: var(--sidebar-width);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* User Profile */
+.brand {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.avatar {
+  width: var(--avatar-width);
+  height: var(--avatar-width);
+  background-color: violet;
+  border-radius: 50%;
+  margin: 20px;
+}
+
+.brand .name {
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+/* Nav */
+.nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.tab-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 70%;
+  padding: 12px 0;
+  border-radius: 12px;
+  border: none;
+  background-color: #f2f2fb;
+  color: #4d4f68;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.tab-btn:hover {
+  /* background-color: #b5b5ff; */
+}
+
+.nav .active {
+  background-color: var(--purple);
+  color: white;
+}
+/* ==================== Main ==================== */
+
+.content {
+  padding: 28px;
+  flex: 1;
+}
+
+/* Dashboard */
+/* KPIs */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 22px;
+  width: 100%;
+}
+.kpi {
+  background-color: var(--panel);
+  border-radius: var(--radius);
+  padding: 18px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  box-shadow: 0 1px 0 #ececf3;
+}
+
+.kpi .icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+}
+
+.kpi .value {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.kpi .label {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.kpi.balance .icon {
+  background: #f1ecff;
+  color: var(--purple);
+}
+.kpi.income .icon {
+  background: #fff0e8;
+  color: var(--orange);
+}
+.kpi.expense .icon {
+  background: #ffecef;
+  color: var(--red);
+}
+.kpi.tip .icon {
+  background: #ffe6f0;
+  color: var(--pink);
+}
+
+/* Income */
+/* Income items */
+
+#income-list,
+#expense-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.income-item,
+.expense-item {
+  flex: 0 0 calc(50% - 12px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.income-group-source-date,
+.expense-group-source-date {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.income-source,
+.expense-source {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2a2b3a;
+}
+
+.income-amount,
+.expense-amount {
+  font-weight: 700;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.income-amount {
+  color: green;
+  background: #f2f9f5;
+}
+
+.expense-amount {
+  color: var(--red);
+  background: #ffecec;
+}
+
+.income-group-action-amount,
+.expense-group-action-amount {
+  display: flex;
+  flex-direction: row;
+}
+
+.income-date {
+  font-size: 0.9rem;
+}
+
+/* Tip */
+#tip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tip-item {
+  flex: 0 0 calc(50% - 12px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.tip-customer {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2a2b3a;
+}
+
+.tip-group-customer-date-note {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tip-group-date-note {
+  display: flex;
+}
+
+.tip-amount {
+  font-weight: 700;
+  padding: 12px;
+  border-radius: 12px;
+  color: green;
+  background: #f2f9f5;
+}
+
+.income-item:hover .btn.icon,
+.expense-item:hover .btn.icon,
+.tip-item:hover .btn.icon {
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* ============================================= */
+
+.btn-add {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  transform: translate(-2rem, -2rem);
+  font-size: 1rem;
+}
+
+/* Tablet: ≤ 992px */
+@media (max-width: 992px) {
+  .container {
+    flex-direction: column; /* Sidebar lên trên, content bên dưới */
+  }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    padding: 12px 16px;
+  }
+  .nav .tab-btn {
+    width: 100%; /* Nút to full-width dễ bấm */
+  }
+  .content {
+    padding: 20px;
+  }
+}
+
+/* Mobile: ≤ 600px */
+@media (max-width: 600px) {
+  .content {
+    padding: 16px;
+  }
+}
+
+/* KPI */
+
+@media (max-width: 992px) {
+  .kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* List Income, Expense, Tip */
+/* Tablet vẫn 2 item/hàng như hiện tại, không cần đổi */
+
+/* Mobile: ≤ 600px — mỗi item chiếm full width */
+@media (max-width: 600px) {
+  .income-item,
+  .expense-item,
+  .tip-item {
+    flex: 0 0 100%;
+  }
+  .btn-add {
+    transform: translate(-1.5rem, -5.5rem);
+  }
+}
+
+/* ===== Bottom Nav (mobile) ===== */
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: none; /* chỉ bật trên mobile */
+  justify-content: space-around;
+  align-items: center;
+  padding: 8px 14px calc(8px + env(safe-area-inset-bottom));
+  background: var(--panel);
+  border-top: 1px solid #ececf3;
+  box-shadow: 0 -4px 24px rgba(15, 18, 40, 0.06);
+}
+
+/* Nút tròn chỉ icon */
+.bottom-nav .tab-btn.icon-only {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: #f2f2fb;
+  display: grid;
+  place-items: center;
+  font-size: 22px; /* kích thước icon (emoji) */
+  color: #4d4f68;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+.bottom-nav .tab-btn.icon-only:active {
+  transform: scale(0.96);
+}
+.bottom-nav .tab-btn.icon-only.active {
+  background: var(--purple);
+  color: #fff;
+}
+
+/* Hiển thị trên mobile, ẩn sidebar, chừa padding cho content */
+@media (max-width: 600px) {
+  .sidebar {
+    display: none;
+  } /* ẩn khu vực profile + list nút cũ */
+  .bottom-nav {
+    display: flex;
+  } /* bật nav đáy */
+  .content {
+    padding: 16px;
+    padding-bottom: calc(
+      90px + env(safe-area-inset-bottom)
+    ); /* chừa chỗ cho nav */
+  }
+}

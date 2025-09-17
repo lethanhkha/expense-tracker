@@ -1,0 +1,36 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --avatar-width: 50px;
+  --radius: 18px;
+  --sidebar-width: 360px;
+  --muted: #6b6f88;
+  --panel: #ffffff;
+  --purple: #7b61ff;
+  --red: #ff6b7b;
+  --green: #19c37d;
+  --orange: #ff7a00;
+  --pink: #ff69b4;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.hidden {
+  display: none;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  width: 100%;
+  display: flex;
+}
