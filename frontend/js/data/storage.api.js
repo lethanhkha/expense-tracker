@@ -1,4 +1,5 @@
-const BASE = "https://expense-tracker-backend-03sy.onrender.com";
+// const BASE = "https://expense-tracker-backend-03sy.onrender.com";
+const BASE = "https://expense-tracker-backend-03sy.onrender.com/api";
 
 export async function getIncomes() {
   return (await fetch(`${BASE}/incomes`)).json();
