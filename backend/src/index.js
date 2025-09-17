@@ -12,7 +12,22 @@ import stats from "./routes/stats.js";
 dotenv.config();
 const app = express();
 
-app.use(cors({ origin: true, credentials: true }));
+// app.use(cors({ origin: true, credentials: true }));
+const allow = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true); // allow tools/postman
+      if (allow.length === 0 || allow.includes(origin)) return cb(null, true);
+      cb(new Error(`CORS blocked for ${origin}`));
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(morgan("dev"));
 
