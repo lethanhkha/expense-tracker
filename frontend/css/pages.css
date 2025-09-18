@@ -338,7 +338,7 @@
   color: #fff;
 }
 
-/* Hiển thị trên mobile, ẩn sidebar, chừa padding cho content */
+/* Hiển thị trên mobile, ẩn nav, chừa padding cho content */
 @media (max-width: 600px) {
   .sidebar nav {
     display: none;
@@ -348,8 +348,6 @@
   } /* bật nav đáy */
   .content {
     padding: 16px;
-    padding-bottom: calc(
-      90px + env(safe-area-inset-bottom)
-    ); /* chừa chỗ cho nav */
+    padding-bottom: calc(90px + env(safe-area-inset-bottom));
   }
 }

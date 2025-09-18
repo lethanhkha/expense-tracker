@@ -6,16 +6,15 @@ import {
   updateExpense,
   deleteExpense,
 } from "../data/storage.api.js";
-import { formatCurrency } from "./income.js"; // dùng chung formatter
 
-function escapeHtml(str) {
-  return String(str)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+import {
+  formatCurrency,
+  formatDateDisplay,
+  todayISO,
+  setupQuickAmountButtons,
+  ensureDefaultDate,
+  escapeHtml,
+} from "../modules/formatAndQuickbuttons.js";
 
 export function initExpense({ onChanged }) {
   const modal = document.getElementById("modal-expense");
@@ -34,6 +33,13 @@ export function initExpense({ onChanged }) {
     form?.reset();
     idInput.value = "";
     title.textContent = "Thêm chi tiêu";
+
+    // mặc định hôm nay khi thêm mới
+    ensureDefaultDate(dateInput, todayISO());
+    amountInput.value = amountInput.value || 0;
+
+    setupQuickAmountButtons(modal, amountInput);
+
     modal.classList.add("show");
     document.body.style.overflow = "hidden";
   }
@@ -68,22 +74,11 @@ export function initExpense({ onChanged }) {
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const payload = {
-      // id: document.getElementById("expense-id").value || Date.now().toString(),
-      // source: document.getElementById("expense-source").value.trim(),
-      // amount: parseFloat(document.getElementById("expense-amount").value),
-      // date: document.getElementById("expense-date").value,
       source: sourceInput.value.trim(),
       amount: parseFloat(amountInput.value),
       date: dateInput.value,
     };
 
-    // const list = getExpenses();
-    // const ix = list.findIndex((i) => i.id === payload.id);
-    // if (ix >= 0) list[ix] = payload;
-    // else list.push(payload);
-    // saveExpenses(list);
-
-    // const id = document.getElementById("expense-id").value.trim();
     const id = idInput.value.trim();
     if (id) await updateExpense(id, payload);
     else await createExpense(payload);
@@ -113,10 +108,9 @@ export function initExpense({ onChanged }) {
         <li class="expense-item" data-id="${i._id}">
           <div class="expense-group-source-date">
             <span class="expense-source">${escapeHtml(i.source)}</span>
-            <span class="expense-date muted">${(i.date || "").slice(
-              0,
-              10
-            )}</span>
+            <span class="expense-date muted">${formatDateDisplay(
+              i.date
+            )}</span>          
           </div>
           <div class="expense-group-action-amount">
             <div class="item-actions">

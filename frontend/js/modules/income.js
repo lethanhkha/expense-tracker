@@ -7,19 +7,44 @@ import {
   deleteIncome,
 } from "../data/storage.api.js";
 
-function escapeHtml(str) {
-  return String(str)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+import {
+  formatCurrency,
+  formatDateDisplay,
+  todayISO,
+  setupQuickAmountButtons,
+  ensureDefaultDate,
+  escapeHtml,
+} from "../modules/formatAndQuickbuttons.js";
+
+/**
+ * Return today's date in yyyy‑mm‑dd format (local timezone).
+ * @returns {string}
+ */
+function todayStr() {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate())
+    .toISOString()
+    .slice(0, 10);
 }
 
-export function formatCurrency(amount) {
-  return (Number(amount) || 0).toLocaleString("vi-VN") + "đ";
+/**
+ * Convert a yyyy-mm-dd date string to dd/MM/yyyy for display.
+ * Returns an empty string if the input is falsy.
+ * @param {string} dateStr
+ * @returns {string}
+ */
+function formatDate(dateStr) {
+  if (!dateStr) return "";
+  const [year, month, day] = dateStr.split("-");
+  return `${day}/${month}/${year}`;
 }
 
+/**
+ * Initialise the income module. Handles showing/closing the modal, submitting
+ * the form to the backend, rendering the list, and wiring up quick amount buttons.
+ * @param {object} options
+ * @param {function} options.onChanged Callback fired after the list changes
+ */
 export function initIncome({ onChanged }) {
   const modal = document.getElementById("modal-income");
   const openBtn = document.getElementById("btn-add-income");
@@ -33,8 +58,34 @@ export function initIncome({ onChanged }) {
   const listEl = document.getElementById("income-list");
   let currentIncomes = [];
 
-  // open/close modal (lấy nhanh, hoặc có thể dùng wireModal ở trên)
-  // function open() {
+  // const quickAmounts = [
+  //   500000, 200000, 100000, 50000, 20000, 10000, 5000, -5000,
+  // ];
+  // const amountField = modal.querySelector("input[name='amount']");
+  // const quickWrapper = document.createElement("div");
+  // quickWrapper.className = "quick-amounts";
+  // quickAmounts.forEach((val) => {
+  //   const btn = document.createElement("button");
+  //   btn.type = "button";
+  //   btn.className = "btn ghost quick-amount-btn";
+  //   // Display + or – prefix and convert to "k" units for readability
+  //   btn.textContent = (val > 0 ? "+" : "") + val / 1000 + "k";
+  //   btn.addEventListener("click", () => {
+  //     let current = parseInt(amountField.value.replace(/\D/g, "")) || 0;
+  //     amountField.value = current + val;
+  //   });
+  //   quickWrapper.appendChild(btn);
+  // });
+  // // Append the quick buttons after the amount input element
+  // amountInput.parentElement?.appendChild(quickWrapper);
+
+  /**
+   * Show the modal. In add mode the form resets and the date is preset
+   * to today; in edit mode the fields are prefilled from `data`.
+   * @param {object} param0
+   * @param {"add"|"edit"} param0.mode
+   * @param {object|null} param0.data The income record to edit
+   */
   function open({ mode = "add", data = null } = {}) {
     form?.reset();
     idInput.value = "";
@@ -46,17 +97,23 @@ export function initIncome({ onChanged }) {
       amountInput.value = data.amount ?? "";
       dateInput.value = (data.date || "").slice(0, 10);
       title.textContent = "Chỉnh sửa khoản thu";
+    } else {
+      // mặc định hôm nay
+      ensureDefaultDate(dateInput, todayISO());
+      amountInput.value = amountInput.value || 0;
     }
+
+    setupQuickAmountButtons(modal, amountInput);
 
     modal.classList.add("show");
     document.body.style.overflow = "hidden";
   }
+
   function close() {
     modal.classList.remove("show");
     document.body.style.overflow = "";
   }
 
-  // openBtn?.addEventListener("click", open);
   openBtn?.addEventListener("click", () => open());
   modal
     .querySelectorAll("[data-close]")
@@ -68,44 +125,26 @@ export function initIncome({ onChanged }) {
     if (e.key === "Escape" && modal.classList.contains("show")) close();
   });
 
-  // form?.addEventListener("submit", (e) => {
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const payload = {
-      //   id: document.getElementById("income-id").value || Date.now().toString(),
-      // source: document.getElementById("income-source").value.trim(),
-      // amount: parseFloat(document.getElementById("income-amount").value),
-      // date: document.getElementById("income-date").value,
       source: sourceInput.value.trim(),
       amount: parseFloat(amountInput.value),
       date: dateInput.value,
     };
-
-    // const list = getIncomes();
-    // const ix = list.findIndex((i) => i.id === payload.id);
-    // if (ix >= 0) list[ix] = payload;
-    // else list.push(payload);
-    // saveIncomes(list);
-
-    // const id = document.getElementById("income-id").value.trim();
     const id = idInput.value.trim();
     if (id) {
       await updateIncome(id, payload);
     } else {
       await createIncome(payload);
     }
-
-    // renderIncomes();
     await renderIncomes();
-    onChanged?.();
+    if (typeof onChanged === "function") onChanged();
     close();
   });
 
-  // function renderIncomes() {
   async function renderIncomes() {
-    // const listEl = document.getElementById("income-list");
     if (!listEl) return;
-    // const incomes = getIncomes();
     const incomes = await getIncomes();
     currentIncomes = incomes;
 
@@ -120,9 +159,8 @@ export function initIncome({ onChanged }) {
           <li class="income-item" data-id="${i._id}">
             <div class="income-group-source-date">
               <span class="income-source">${escapeHtml(i.source)}</span>
-              <span class="income-date muted">${(i.date || "").slice(
-                0,
-                10
+              <span class="income-date muted">${formatDateDisplay(
+                i.date
               )}</span>
             </div>
             <div class="income-group-action-amount">
@@ -165,9 +203,11 @@ export function initIncome({ onChanged }) {
       if (!confirm(`Xoá ${name}?`)) return;
       await deleteIncome(id);
       await renderIncomes();
-      onChanged?.();
+      if (typeof onChanged === "function") onChanged();
     }
   });
+
+  renderIncomes();
 
   return { renderIncomes };
 }

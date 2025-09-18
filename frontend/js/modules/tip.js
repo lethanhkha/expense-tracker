@@ -5,30 +5,22 @@ import {
   updateTip,
   deleteTip,
 } from "../data/storage.api.js";
-import { formatCurrency } from "./income.js";
 
-// Utils
-// function formatCurrency(amount) {
-//   return (Number(amount) || 0).toLocaleString("vi-VN") + "đ";
-// }
+import {
+  formatCurrency,
+  formatDateDisplayTip,
+  todayISO,
+  ensureDefaultDate,
+  escapeHtml,
+  setupQuickAmountButtons,
+} from "../modules/formatAndQuickbuttons.js";
 
-// function todayStr() {
-//   return new Date().toISOString().split("T")[0];
-// }
-
-const todayStr = () => {
-  const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate())
-    .toISOString()
-    .slice(0, 10); // yyyy-mm-dd (local midnight)
-};
-
-// function getClaimableTipsTotal() {
-//   const today = todayStr();
-//   return getTips()
-//     .filter((t) => t.date < today)
-//     .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
-// }
+// const todayStr = () => {
+//   const d = new Date();
+//   return new Date(d.getFullYear(), d.getMonth(), d.getDate())
+//     .toISOString()
+//     .slice(0, 10); // yyyy-mm-dd (local midnight)
+// };
 
 // Render list
 // function renderTips() {
@@ -86,10 +78,9 @@ async function renderTips() {
                   : ""
               }
               <div class="tip-group-date-note">
-                <span class="tip-date muted">${(i.date || "").slice(
-                  0,
-                  10
-                )}</span>
+              <span class="tip-date muted">${formatDateDisplayTip(
+                i.date
+              )}</span>              
               ${
                 i.note
                   ? `<span class="muted">&nbsp;- ${escapeHtml(i.note)}</span>`
@@ -117,14 +108,6 @@ async function renderTips() {
     // <span class="income-date">${t.date}</span>
     .join("");
 }
-function escapeHtml(str) {
-  return String(str)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
 
 export function initTip({ onChanged } = {}) {
   const tipModal = document.getElementById("modal-tip");
@@ -135,13 +118,11 @@ export function initTip({ onChanged } = {}) {
 
   function openTipModal(mode = "add", data = null) {
     tipForm?.reset();
-    document.getElementById("tip-date").value = todayStr();
+    ensureDefaultDate(document.getElementById("tip-date"), todayISO());
 
     if (mode === "edit" && data) {
-      // document.getElementById("tip-id").value = data.id;
       document.getElementById("tip-id").value = data._id;
       document.getElementById("tip-amount").value = data.amount;
-      // document.getElementById("tip-date").value = data.date;
       document.getElementById("tip-date").value = (data.date || "").slice(
         0,
         10
@@ -153,6 +134,8 @@ export function initTip({ onChanged } = {}) {
       document.getElementById("tip-id").value = "";
       tipTitle.textContent = "Thêm tip";
     }
+
+    setupQuickAmountButtons(tipModal, document.getElementById("tip-amount"));
 
     tipModal.classList.add("show");
     document.body.style.overflow = "hidden";
