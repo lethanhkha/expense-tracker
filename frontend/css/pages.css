@@ -19,8 +19,6 @@
 .avatar {
   width: var(--avatar-width);
   height: var(--avatar-width);
-  background-color: violet;
-  border-radius: 50%;
   margin: 20px;
 }
 
@@ -54,12 +52,15 @@
 }
 
 .tab-btn:hover {
-  /* background-color: #b5b5ff; */
+  background-color: #e6e9ff; /* tím nhạt pha từ #7B61FF */
+  color: #4d4f68;
+  box-shadow: 0 4px 14px rgba(123, 97, 255, 0.14);
 }
 
 .nav .active {
   background-color: var(--purple);
   color: white;
+  box-shadow: 0 6px 20px rgba(123, 97, 255, 0.25);
 }
 /* ==================== Main ==================== */
 
@@ -324,7 +325,7 @@
   background: #f2f2fb;
   display: grid;
   place-items: center;
-  font-size: 22px; /* kích thước icon (emoji) */
+  font-size: 22px;
   color: #4d4f68;
   cursor: pointer;
   transition: transform 0.12s ease, background 0.12s ease;
@@ -339,9 +340,9 @@
 
 /* Hiển thị trên mobile, ẩn sidebar, chừa padding cho content */
 @media (max-width: 600px) {
-  .sidebar {
+  .sidebar nav {
     display: none;
-  } /* ẩn khu vực profile + list nút cũ */
+  }
   .bottom-nav {
     display: flex;
   } /* bật nav đáy */
