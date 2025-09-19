@@ -8,6 +8,7 @@ import incomes from "./routes/incomes.js";
 import expenses from "./routes/expenses.js";
 import tips from "./routes/tips.js";
 import stats from "./routes/stats.js";
+import presets from "./routes/presets.js";
 
 const envFile = process.env.NODE_ENV === "production" ? ".env" : ".env.dev";
 dotenv.config({ path: envFile });
@@ -39,6 +40,7 @@ app.use("/api/incomes", incomes);
 app.use("/api/expenses", expenses);
 app.use("/api/tips", tips);
 app.use("/api/stats", stats);
+app.use("/api/presets", presets);
 
 const port = process.env.PORT || 8000;
 

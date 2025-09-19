@@ -12,6 +12,7 @@
 /* User Profile */
 .brand {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   width: 100%;
 }
@@ -352,4 +353,127 @@
     padding: 16px;
     padding-bottom: calc(90px + env(safe-area-inset-bottom));
   }
+}
+
+/* ===== Category Modal ===== */
+.cat-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.tab-btn.modal-tab {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 12px;
+  border: none;
+  background: #f2f2fb;
+  color: #4d4f68;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.tab-btn.modal-tab.active {
+  background: var(--purple);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(123, 97, 255, 0.2);
+}
+
+.cat-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cat-item {
+  border: 1px solid #ececf3;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 6px;
+}
+.cat-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cat-source {
+  font-weight: 700;
+  color: #2a2b3a;
+}
+.cat-amount {
+  font-weight: 700;
+}
+.cat-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.cat-footer {
+  position: sticky;
+  bottom: -22px; /* chống tràn bóng đổ */
+  padding-top: 8px;
+  margin-top: 8px;
+  background: #fff;
+  border-top: 1px solid #ececf3;
+}
+
+/* ===== Category Modal Tabs ===== */
+.cat-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.modal-tab {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  border-radius: 12px;
+  background: #f2f2fb;
+  color: #4d4f68;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.12s ease;
+}
+
+.modal-tab:hover {
+  background: #e6e9ff; /* tím nhạt */
+  box-shadow: 0 4px 14px rgba(123, 97, 255, 0.14);
+}
+
+.modal-tab:active {
+  transform: scale(0.98);
+}
+
+.modal-tab.active {
+  background: var(--purple);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(123, 97, 255, 0.25);
+}
+
+/* (tuỳ chọn) nội dung tab modal */
+.cat-pages .cat-page.hidden {
+  display: none;
+}
+
+/* ===== Category Modal: toggle theo data-mode ===== */
+/* Khi đang ở chế độ form: ẩn Tabs, List, Footer */
+#modal-categories[data-mode="form"] .cat-tabs,
+#modal-categories[data-mode="form"] .cat-pages,
+#modal-categories[data-mode="form"] .cat-footer {
+  display: none !important;
+}
+
+/* Khi đang ở chế độ list: ẩn Form */
+#modal-categories[data-mode="list"] .cat-form {
+  display: none !important;
+}
+
+/* Hiện form khi ở chế độ form, kể cả nếu trước đó có .hidden */
+#modal-categories[data-mode="form"] .cat-form {
+  display: grid !important;
 }

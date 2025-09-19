@@ -80,3 +80,29 @@ export async function deleteTip(id) {
 export async function getKPI() {
   return (await fetch(`${BASE}/stats/kpi`)).json();
 }
+
+// ===== Presets (danh mục) =====
+export async function getPresets(type) {
+  const url = `${BASE}/presets${
+    type ? `?type=${encodeURIComponent(type)}` : ""
+  }`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to fetch presets");
+  return res.json();
+}
+
+export async function createPreset(p) {
+  const res = await fetch(`${BASE}/presets`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(p),
+  });
+  if (!res.ok) throw new Error("Failed to create preset");
+  return res.json();
+}
+
+export async function deletePreset(id) {
+  const res = await fetch(`${BASE}/presets/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to delete preset");
+  return res.json();
+}
