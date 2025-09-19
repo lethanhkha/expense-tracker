@@ -20,8 +20,8 @@ r.get("/", async (req, res, next) => {
 
 r.post("/", async (req, res, next) => {
   try {
-    const { source, amount, date } = req.body;
-    const created = await Expense.create({ source, amount, date });
+    const { source, amount, date, note } = req.body;
+    const created = await Expense.create({ source, amount, date, note });
     res.status(201).json(created);
   } catch (e) {
     next(e);

@@ -218,7 +218,9 @@
   gap: 8px;
 }
 
-.tip-group-date-note {
+.tip-group-date-note,
+.income-group-date-note,
+.expense-group-date-note {
   display: flex;
 }
 
