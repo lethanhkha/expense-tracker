@@ -115,11 +115,8 @@ export function initExpense({ onChanged }) {
     }
   });
 
-  // function renderExpenses() {
   async function renderExpenses() {
-    // const listEl = document.getElementById("expense-list");
     if (!listEl) return;
-    // const expenses = getExpenses();
     const expenses = await getExpenses();
     currentExpenses = expenses;
 
@@ -154,6 +151,9 @@ export function initExpense({ onChanged }) {
                 <button class="btn ghost icon" type="button" data-action="delete" aria-label="Xoá khoản chi">
                   🗑️
                 </button>
+                <button class="btn ghost icon" type="button" data-action="clone" aria-label="Nhân bản thu nhập">
+                  📄
+                </button>
               </div>
               <span class="expense-amount">-${formatCurrency(i.amount)}</span>
             </div>
@@ -187,6 +187,21 @@ export function initExpense({ onChanged }) {
       await deleteExpense(id);
       await renderExpenses();
       onChanged?.();
+    }
+
+    if (action === "clone") {
+      const orig = currentExpenses.find((i) => i._id === id);
+      if (!orig) return;
+      const payload = {
+        source: orig.source,
+        amount: orig.amount,
+        date: todayISO(),
+        note: orig.note || "",
+      };
+      await createExpense(payload);
+      await renderExpenses();
+      onChanged?.();
+      return;
     }
   });
 
