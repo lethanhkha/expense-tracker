@@ -126,14 +126,7 @@ export function initIncome({ onChanged }) {
       note: noteInput?.value.trim() || "",
     };
     const id = idInput.value.trim();
-    // if (id) {
-    //   await updateIncome(id, payload);
-    // } else {
-    //   await createIncome(payload);
-    // }
-    // await renderIncomes();
-    // if (typeof onChanged === "function") onChanged();
-    // close();
+
     try {
       if (id) await updateIncome(id, payload);
       else await createIncome(payload);
@@ -188,6 +181,9 @@ export function initIncome({ onChanged }) {
                   <button class="btn ghost icon" type="button" data-action="delete" aria-label="Xoá thu nhập">
                     🗑️
                   </button>
+                  <button class="btn ghost icon" type="button" data-action="clone" aria-label="Nhân bản thu nhập">
+                    📄
+                  </button>
                 </div>
                 <span class="income-amount">+${formatCurrency(i.amount)}</span>
               </div>
@@ -220,6 +216,21 @@ export function initIncome({ onChanged }) {
       await deleteIncome(id);
       await renderIncomes();
       if (typeof onChanged === "function") onChanged();
+    }
+
+    if (action === "clone") {
+      const orig = currentIncomes.find((i) => i._id === id);
+      if (!orig) return;
+      const payload = {
+        source: orig.source,
+        amount: orig.amount,
+        date: todayISO(), // clone nhưng mặc định ngày hôm nay
+        note: orig.note || "",
+      };
+      await createIncome(payload);
+      await renderIncomes();
+      if (typeof onChanged === "function") onChanged();
+      return;
     }
   });
 
