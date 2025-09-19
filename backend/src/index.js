@@ -9,7 +9,9 @@ import expenses from "./routes/expenses.js";
 import tips from "./routes/tips.js";
 import stats from "./routes/stats.js";
 
-dotenv.config();
+const envFile = process.env.NODE_ENV === "production" ? ".env" : ".env.dev";
+dotenv.config({ path: envFile });
+
 const app = express();
 
 // app.use(cors({ origin: true, credentials: true }));
@@ -42,7 +44,10 @@ const port = process.env.PORT || 8000;
 
 connectDB(process.env.MONGODB_URI)
   .then(() =>
-    app.listen(port, () => console.log(`🚀 API on http://localhost:${port}`))
+    app.listen(port, () => {
+      console.log(`🚀 API on http://localhost:${port}`);
+      console.log(process.env.MONGODB_URI);
+    })
   )
   .catch((e) => {
     console.error("❌ DB connect error:", e);
