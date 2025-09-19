@@ -17,6 +17,8 @@ import {
 } from "../modules/formatAndQuickbuttons.js";
 
 export function initExpense({ onChanged }) {
+  let submitting = false;
+
   const modal = document.getElementById("modal-expense");
   const openBtn = document.getElementById("btn-add-expense");
   const form = document.getElementById("expense-form");
@@ -26,6 +28,8 @@ export function initExpense({ onChanged }) {
   const sourceInput = document.getElementById("expense-source");
   const amountInput = document.getElementById("expense-amount");
   const dateInput = document.getElementById("expense-date");
+  const noteInput = document.getElementById("expense-note");
+
   const listEl = document.getElementById("expense-list");
   let currentExpenses = [];
 
@@ -52,6 +56,7 @@ export function initExpense({ onChanged }) {
     amountInput.value = data.amount ?? "";
     dateInput.value = (data.date || "").slice(0, 10);
     title.textContent = "Chỉnh sửa chi tiêu";
+    noteInput.value = data.note || "";
   }
 
   function close() {
@@ -73,20 +78,41 @@ export function initExpense({ onChanged }) {
   // form?.addEventListener("submit", (e) => {
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    if (submitting) return;
+    submitting = true;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const cancelBtn = form.querySelector("[data-close]");
+    submitBtn?.setAttribute("disabled", "true");
+    cancelBtn?.setAttribute("disabled", "true");
+    form.setAttribute("aria-busy", "true");
+
     const payload = {
       source: sourceInput.value.trim(),
       amount: parseFloat(amountInput.value),
       date: dateInput.value,
+      note: noteInput?.value.trim() || "",
     };
 
     const id = idInput.value.trim();
-    if (id) await updateExpense(id, payload);
-    else await createExpense(payload);
-
-    // renderExpenses();
-    await renderExpenses();
-    onChanged?.();
-    close();
+    // if (id) await updateExpense(id, payload);
+    // else await createExpense(payload);
+    // await renderExpenses();
+    // onChanged?.();
+    // close();
+    try {
+      if (id) await updateExpense(id, payload);
+      else await createExpense(payload);
+      const renderPromise = renderExpenses();
+      onChanged?.();
+      close();
+      await renderPromise;
+    } finally {
+      submitBtn?.removeAttribute("disabled");
+      cancelBtn?.removeAttribute("disabled");
+      form.removeAttribute("aria-busy");
+      submitting = false;
+    }
   });
 
   // function renderExpenses() {
@@ -108,9 +134,16 @@ export function initExpense({ onChanged }) {
         <li class="expense-item" data-id="${i._id}">
           <div class="expense-group-source-date">
             <span class="expense-source">${escapeHtml(i.source)}</span>
-            <span class="expense-date muted">${formatDateDisplay(
-              i.date
-            )}</span>          
+            <span class="expense-group-date-note">
+              <span class="expense-date muted">${formatDateDisplay(
+                i.date
+              )}</span>
+              ${
+                i.note
+                  ? `<span class="muted">&nbsp;- ${escapeHtml(i.note)}</span>`
+                  : ""
+              }
+            </span>
           </div>
           <div class="expense-group-action-amount">
             <div class="item-actions">

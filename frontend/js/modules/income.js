@@ -46,6 +46,8 @@ function formatDate(dateStr) {
  * @param {function} options.onChanged Callback fired after the list changes
  */
 export function initIncome({ onChanged }) {
+  let submitting = false;
+
   const modal = document.getElementById("modal-income");
   const openBtn = document.getElementById("btn-add-income");
   const form = document.getElementById("income-form");
@@ -55,29 +57,10 @@ export function initIncome({ onChanged }) {
   const sourceInput = document.getElementById("income-source");
   const amountInput = document.getElementById("income-amount");
   const dateInput = document.getElementById("income-date");
+  const noteInput = document.getElementById("income-note");
+
   const listEl = document.getElementById("income-list");
   let currentIncomes = [];
-
-  // const quickAmounts = [
-  //   500000, 200000, 100000, 50000, 20000, 10000, 5000, -5000,
-  // ];
-  // const amountField = modal.querySelector("input[name='amount']");
-  // const quickWrapper = document.createElement("div");
-  // quickWrapper.className = "quick-amounts";
-  // quickAmounts.forEach((val) => {
-  //   const btn = document.createElement("button");
-  //   btn.type = "button";
-  //   btn.className = "btn ghost quick-amount-btn";
-  //   // Display + or – prefix and convert to "k" units for readability
-  //   btn.textContent = (val > 0 ? "+" : "") + val / 1000 + "k";
-  //   btn.addEventListener("click", () => {
-  //     let current = parseInt(amountField.value.replace(/\D/g, "")) || 0;
-  //     amountField.value = current + val;
-  //   });
-  //   quickWrapper.appendChild(btn);
-  // });
-  // // Append the quick buttons after the amount input element
-  // amountInput.parentElement?.appendChild(quickWrapper);
 
   /**
    * Show the modal. In add mode the form resets and the date is preset
@@ -96,6 +79,7 @@ export function initIncome({ onChanged }) {
       sourceInput.value = data.source || "";
       amountInput.value = data.amount ?? "";
       dateInput.value = (data.date || "").slice(0, 10);
+      noteInput.value = data.note || "";
       title.textContent = "Chỉnh sửa khoản thu";
     } else {
       // mặc định hôm nay
@@ -127,20 +111,43 @@ export function initIncome({ onChanged }) {
 
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (submitting) return; // chặn double click
+    submitting = true;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const cancelBtn = form.querySelector("[data-close]");
+    submitBtn?.setAttribute("disabled", "true");
+    cancelBtn?.setAttribute("disabled", "true");
+    form.setAttribute("aria-busy", "true");
+
     const payload = {
       source: sourceInput.value.trim(),
       amount: parseFloat(amountInput.value),
       date: dateInput.value,
+      note: noteInput?.value.trim() || "",
     };
     const id = idInput.value.trim();
-    if (id) {
-      await updateIncome(id, payload);
-    } else {
-      await createIncome(payload);
+    // if (id) {
+    //   await updateIncome(id, payload);
+    // } else {
+    //   await createIncome(payload);
+    // }
+    // await renderIncomes();
+    // if (typeof onChanged === "function") onChanged();
+    // close();
+    try {
+      if (id) await updateIncome(id, payload);
+      else await createIncome(payload);
+      // đóng modal NGAY, rồi mới đợi render (đỡ cảm giác lag)
+      const renderPromise = renderIncomes();
+      if (typeof onChanged === "function") onChanged();
+      close();
+      await renderPromise;
+    } finally {
+      submitBtn?.removeAttribute("disabled");
+      cancelBtn?.removeAttribute("disabled");
+      form.removeAttribute("aria-busy");
+      submitting = false;
     }
-    await renderIncomes();
-    if (typeof onChanged === "function") onChanged();
-    close();
   });
 
   async function renderIncomes() {
@@ -159,9 +166,18 @@ export function initIncome({ onChanged }) {
           <li class="income-item" data-id="${i._id}">
             <div class="income-group-source-date">
               <span class="income-source">${escapeHtml(i.source)}</span>
-              <span class="income-date muted">${formatDateDisplay(
-                i.date
-              )}</span>
+              <span class="income-group-date-note">
+                <span class="income-date muted">${formatDateDisplay(
+                  i.date
+                )}</span>
+                ${
+                  i.note
+                    ? `<span class="income-note muted">&nbsp;- ${escapeHtml(
+                        i.note
+                      )}</span>`
+                    : ""
+                } 
+              </span>
             </div>
             <div class="income-group-action-amount">
               <div class="item-actions">
