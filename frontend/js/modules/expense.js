@@ -5,6 +5,7 @@ import {
   createExpense,
   updateExpense,
   deleteExpense,
+  getPresets,
 } from "../data/storage.api.js";
 
 import {
@@ -29,9 +30,55 @@ export function initExpense({ onChanged }) {
   const amountInput = document.getElementById("expense-amount");
   const dateInput = document.getElementById("expense-date");
   const noteInput = document.getElementById("expense-note");
+  const presetSelect = document.getElementById("expense-preset");
 
   const listEl = document.getElementById("expense-list");
   let currentExpenses = [];
+
+  async function loadExpensePresets() {
+    if (!presetSelect) return;
+    presetSelect.innerHTML = `<option value="">-- Chọn mẫu --</option>`;
+    const presets = await getPresets("expense");
+    presetSelect.insertAdjacentHTML(
+      "beforeend",
+      (presets || [])
+        .map(
+          (p) => `
+        <option
+          value="${p._id}"
+          data-source="${escapeHtml(p.source)}"
+          data-amount="${p.amount ?? ""}"
+          data-note="${escapeHtml(p.note || "")}">
+          ${escapeHtml(p.source)}${
+            typeof p.amount === "number" ? ` (${formatCurrency(p.amount)})` : ""
+          }
+        </option>`
+        )
+        .join("")
+    );
+  }
+
+  presetSelect?.addEventListener("change", () => {
+    const opt = presetSelect.selectedOptions[0];
+
+    // Nếu chọn lại option "Chọn mẫu" -> reset form theo mode
+    if (!opt || !opt.value) {
+      sourceInput.value = "";
+      amountInput.value = "";
+      noteInput.value = "";
+
+      if (!idInput.value) {
+        ensureDefaultDate(dateInput, todayISO());
+        amountInput.value = amountInput.value || 0;
+      }
+      return;
+    }
+
+    // Chọn preset -> autofill
+    sourceInput.value = opt.dataset.source || "";
+    amountInput.value = opt.dataset.amount || 0;
+    noteInput.value = opt.dataset.note || "";
+  });
 
   function open() {
     form?.reset();
@@ -43,6 +90,9 @@ export function initExpense({ onChanged }) {
     amountInput.value = amountInput.value || 0;
 
     setupQuickAmountButtons(modal, amountInput);
+
+    loadExpensePresets();
+    presetSelect && (presetSelect.value = "");
 
     modal.classList.add("show");
     document.body.style.overflow = "hidden";

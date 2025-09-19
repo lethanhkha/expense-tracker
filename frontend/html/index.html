@@ -13,18 +13,21 @@
     <div class="container">
       <aside class="sidebar">
         <div class="brand">
-          <div class="avatar">
-            <img
-              src="../images/avatar.jpg"
-              alt="Avatar User"
-              width="100%"
-              style="border-radius: 50%"
-            />
+          <div class="profile">
+            <div class="avatar">
+              <img
+                src="../images/avatar.jpg"
+                alt="Avatar User"
+                width="100%"
+                style="border-radius: 50%"
+              />
+            </div>
+            <div class="">
+              <div class="name">Tuyếtt Ngàa</div>
+              <div class="muted">Tài khoản cao cấp</div>
+            </div>
           </div>
-          <div class="">
-            <div class="name">Tuyếtt Ngàa</div>
-            <div class="muted">Tài khoản cao cấp</div>
-          </div>
+          <button id="categoryButton" class="btn primary">Quản lý</button>
         </div>
         <nav class="nav">
           <button class="tab-btn active" data-tab="dashboard">Trang chủ</button>
@@ -88,6 +91,12 @@
               </div>
               <form class="form" id="income-form">
                 <input type="hidden" id="income-id" />
+                <div class="field">
+                  <label>Chọn danh mục</label>
+                  <select class="input" id="income-preset">
+                    <option value="">-- Chọn mẫu --</option>
+                  </select>
+                </div>
                 <div class="field">
                   <label>Nguồn thu</label
                   ><input
@@ -153,6 +162,12 @@
               </div>
               <form class="form" id="expense-form">
                 <input type="hidden" id="expense-id" />
+                <div class="field">
+                  <label>Chọn danh mục</label>
+                  <select class="input" id="expense-preset">
+                    <option value="">-- Chọn mẫu --</option>
+                  </select>
+                </div>
                 <div class="field">
                   <label>Khoản chi</label>
                   <input
@@ -262,6 +277,85 @@
           </div>
         </div>
       </main>
+      <!-- Modal Categories -->
+      <div class="modal" id="modal-categories" data-mode="list">
+        <div class="dialog">
+          <div class="inner">
+            <div class="header">
+              <div class="title">Danh mục cố định</div>
+              <button class="btn ghost" data-close>✕</button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="cat-tabs" role="tablist">
+              <button class="modal-tab active" data-tab="cat-income">
+                Thu nhập
+              </button>
+              <button class="modal-tab" data-tab="cat-expense">Chi tiêu</button>
+            </div>
+
+            <!-- Pages -->
+            <div class="cat-pages">
+              <div id="cat-income" class="cat-page">
+                <ul id="cat-income-list" class="cat-list"></ul>
+              </div>
+              <div id="cat-expense" class="cat-page hidden">
+                <ul id="cat-expense-list" class="cat-list"></ul>
+              </div>
+            </div>
+
+            <!-- Footer (nút thêm danh mục) -->
+            <div class="cat-footer">
+              <button class="btn primary" id="btn-cat-add">
+                + Thêm danh mục
+              </button>
+              <button type="button" class="btn ghost" data-close>Đóng</button>
+            </div>
+
+            <!-- Form thêm danh mục (ẩn/hiện khi bấm nút) -->
+            <form class="form cat-form" id="cat-form">
+              <div class="field">
+                <label>Loại</label>
+                <select class="input" id="cat-type">
+                  <option value="income">Thu nhập</option>
+                  <option value="expense">Chi tiêu</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Tên danh mục</label>
+                <input
+                  class="input"
+                  id="cat-source"
+                  placeholder="VD: Lương, Tiền nhà..."
+                  required
+                />
+              </div>
+              <div class="field">
+                <label>Số tiền mặc định (tùy chọn)</label>
+                <input
+                  class="input"
+                  id="cat-amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div class="field">
+                <label>Ghi chú (tùy chọn)</label>
+                <input class="input" id="cat-note" />
+              </div>
+              <div class="actions">
+                <button type="button" class="btn ghost" id="btn-cat-back">
+                  Quay lại danh mục
+                </button>
+                <button type="button" class="btn ghost" data-close>Đóng</button>
+                <button class="btn primary" type="submit">Lưu danh mục</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
       <!-- Bottom Nav (mobile) -->
       <nav class="bottom-nav" role="tablist" aria-label="Điều hướng">
         <button

@@ -5,6 +5,7 @@ import {
   createIncome,
   updateIncome,
   deleteIncome,
+  getPresets,
 } from "../data/storage.api.js";
 
 import {
@@ -58,9 +59,58 @@ export function initIncome({ onChanged }) {
   const amountInput = document.getElementById("income-amount");
   const dateInput = document.getElementById("income-date");
   const noteInput = document.getElementById("income-note");
+  const presetSelect = document.getElementById("income-preset");
 
   const listEl = document.getElementById("income-list");
   let currentIncomes = [];
+
+  async function loadIncomePresets() {
+    if (!presetSelect) return;
+    presetSelect.innerHTML = `<option value="">-- Chọn mẫu --</option>`;
+    const presets = await getPresets("income");
+    presetSelect.insertAdjacentHTML(
+      "beforeend",
+      (presets || [])
+        .map(
+          (p) => `
+        <option
+          value="${p._id}"
+          data-source="${escapeHtml(p.source)}"
+          data-amount="${p.amount ?? ""}"
+          data-note="${escapeHtml(p.note || "")}">
+          ${escapeHtml(p.source)}${
+            typeof p.amount === "number" ? ` (${formatCurrency(p.amount)})` : ""
+          }
+        </option>`
+        )
+        .join("")
+    );
+  }
+
+  presetSelect?.addEventListener("change", () => {
+    const opt = presetSelect.selectedOptions[0];
+
+    // Nếu chọn lại option "Chọn mẫu" (value rỗng) -> reset form theo mode
+    if (!opt || !opt.value) {
+      // reset các field do preset fill
+      sourceInput.value = "";
+      amountInput.value = "";
+      noteInput.value = "";
+
+      // nếu đang thêm mới (không có id) -> đặt lại mặc định
+      if (!idInput.value) {
+        ensureDefaultDate(dateInput, todayISO());
+        amountInput.value = amountInput.value || 0; // về 0 nếu rỗng
+      }
+      return;
+    }
+
+    // Ngược lại: chọn 1 preset -> autofill
+    sourceInput.value = opt.dataset.source || "";
+    amountInput.value = opt.dataset.amount || 0;
+    noteInput.value = opt.dataset.note || "";
+    // ngày giữ nguyên (today khi thêm mới / ngày cũ khi sửa)
+  });
 
   /**
    * Show the modal. In add mode the form resets and the date is preset
@@ -88,6 +138,9 @@ export function initIncome({ onChanged }) {
     }
 
     setupQuickAmountButtons(modal, amountInput);
+
+    loadIncomePresets();
+    presetSelect && (presetSelect.value = "");
 
     modal.classList.add("show");
     document.body.style.overflow = "hidden";

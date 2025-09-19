@@ -129,3 +129,15 @@
   gap: 12px;
   margin-top: 8px;
 }
+.cat-footer {
+  display: flex;
+  justify-content: space-between; /* Đóng bên trái, Thêm bên phải */
+  align-items: center;
+  gap: 10px;
+}
+
+.profile {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
