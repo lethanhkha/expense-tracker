@@ -6,6 +6,7 @@ import {
   updateExpense,
   deleteExpense,
   getPresets,
+  getWallets,
 } from "../data/storage.api.js";
 
 import {
@@ -31,6 +32,7 @@ export function initExpense({ onChanged }) {
   const dateInput = document.getElementById("expense-date");
   const noteInput = document.getElementById("expense-note");
   const presetSelect = document.getElementById("expense-preset");
+  const walletSelect = document.getElementById("expense-wallet");
 
   const listEl = document.getElementById("expense-list");
   let currentExpenses = [];
@@ -56,6 +58,20 @@ export function initExpense({ onChanged }) {
         )
         .join("")
     );
+  }
+
+  async function loadWallets() {
+    if (!walletSelect) return;
+    walletSelect.innerHTML = `<option value="">-- Chọn ví --</option>`;
+    const wallets = await getWallets();
+    wallets.forEach((w) => {
+      walletSelect.insertAdjacentHTML(
+        "beforeend",
+        `<option value="${w._id}">${w.name} (${w.balance} ${
+          w.currency || "VND"
+        })</option>`
+      );
+    });
   }
 
   presetSelect?.addEventListener("change", () => {
@@ -94,6 +110,8 @@ export function initExpense({ onChanged }) {
     loadExpensePresets();
     presetSelect && (presetSelect.value = "");
 
+    loadWallets();
+
     modal.classList.add("show");
     document.body.style.overflow = "hidden";
   }
@@ -107,6 +125,8 @@ export function initExpense({ onChanged }) {
     dateInput.value = (data.date || "").slice(0, 10);
     title.textContent = "Chỉnh sửa chi tiêu";
     noteInput.value = data.note || "";
+    loadWallets();
+    if (data.walletId && walletSelect) walletSelect.value = data.walletId;
   }
 
   function close() {
@@ -125,7 +145,6 @@ export function initExpense({ onChanged }) {
     if (e.key === "Escape" && modal.classList.contains("show")) close();
   });
 
-  // form?.addEventListener("submit", (e) => {
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -142,14 +161,11 @@ export function initExpense({ onChanged }) {
       amount: parseFloat(amountInput.value),
       date: dateInput.value,
       note: noteInput?.value.trim() || "",
+      walletId: walletSelect?.value || null,
     };
 
     const id = idInput.value.trim();
-    // if (id) await updateExpense(id, payload);
-    // else await createExpense(payload);
-    // await renderExpenses();
-    // onChanged?.();
-    // close();
+
     try {
       if (id) await updateExpense(id, payload);
       else await createExpense(payload);

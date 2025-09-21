@@ -1,5 +1,6 @@
 import { Router } from "express";
 import Income from "../models/Income.js";
+import Wallet from "../models/Wallet.js";
 const r = Router();
 
 r.get("/", async (req, res, next) => {
@@ -47,6 +48,108 @@ r.delete("/:id", async (req, res, next) => {
     res.json({ ok: true });
   } catch (e) {
     next(e);
+  }
+});
+
+r.post("/", async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const [inc] = await Income.create([req.body], { session });
+
+    if (req.body.walletId) {
+      const w = await Wallet.findById(req.body.walletId).session(session);
+      if (!w) throw new Error("Wallet not found");
+      w.balance += Number(req.body.amount || 0);
+      await w.save({ session });
+    }
+
+    await session.commitTransaction();
+    res.status(201).json(inc);
+  } catch (e) {
+    await session.abortTransaction();
+    res.status(400).json({ message: e.message });
+  } finally {
+    session.endSession();
+  }
+});
+
+r.patch("/:id", async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const old = await Income.findById(req.params.id).session(session);
+    if (!old) throw new Error("Income not found");
+
+    const updated = await Income.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      session,
+    });
+
+    const oldAmount = Number(old.amount || 0);
+    const newAmount = Number(updated.amount || 0);
+    const delta = newAmount - oldAmount;
+
+    const oldWid = String(old.walletId || "");
+    const newWid = String(updated.walletId || "");
+
+    if (oldWid && newWid && oldWid === newWid) {
+      const w = await Wallet.findById(newWid).session(session);
+      if (w) {
+        w.balance += delta;
+        await w.save({ session });
+      }
+    } else {
+      if (oldWid) {
+        const wOld = await Wallet.findById(oldWid).session(session);
+        if (wOld) {
+          wOld.balance -= oldAmount;
+          await wOld.save({ session });
+        }
+      }
+      if (newWid) {
+        const wNew = await Wallet.findById(newWid).session(session);
+        if (wNew) {
+          wNew.balance += newAmount;
+          await wNew.save({ session });
+        }
+      }
+    }
+
+    await session.commitTransaction();
+    res.json(updated);
+  } catch (e) {
+    await session.abortTransaction();
+    res.status(400).json({ message: e.message });
+  } finally {
+    session.endSession();
+  }
+});
+
+r.delete("/:id", async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const old = await Income.findById(req.params.id).session(session);
+    if (!old) return res.status(404).json({ message: "Not found" });
+
+    await Income.findByIdAndDelete(req.params.id, { session });
+
+    if (old.walletId) {
+      const w = await Wallet.findById(old.walletId).session(session);
+      if (w) {
+        w.balance -= Number(old.amount || 0);
+        await w.save({ session });
+      }
+    }
+
+    await session.commitTransaction();
+    res.json({ ok: true });
+  } catch (e) {
+    await session.abortTransaction();
+    res.status(400).json({ message: e.message });
+  } finally {
+    session.endSession();
   }
 });
 

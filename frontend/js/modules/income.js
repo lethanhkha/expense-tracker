@@ -6,6 +6,7 @@ import {
   updateIncome,
   deleteIncome,
   getPresets,
+  getWallets,
 } from "../data/storage.api.js";
 
 import {
@@ -60,7 +61,7 @@ export function initIncome({ onChanged }) {
   const dateInput = document.getElementById("income-date");
   const noteInput = document.getElementById("income-note");
   const presetSelect = document.getElementById("income-preset");
-
+  const walletSelect = document.getElementById("income-wallet");
   const listEl = document.getElementById("income-list");
   let currentIncomes = [];
 
@@ -85,6 +86,20 @@ export function initIncome({ onChanged }) {
         )
         .join("")
     );
+  }
+
+  async function loadWallets() {
+    if (!walletSelect) return;
+    walletSelect.innerHTML = `<option value="">-- Chọn ví --</option>`;
+    const wallets = await getWallets();
+    (wallets || []).forEach((w) => {
+      walletSelect.insertAdjacentHTML(
+        "beforeend",
+        `<option value="${w._id}">${w.name} (${(w.balance ?? 0).toLocaleString(
+          "vi-VN"
+        )} ${w.currency || "VND"})</option>`
+      );
+    });
   }
 
   presetSelect?.addEventListener("change", () => {
@@ -131,6 +146,8 @@ export function initIncome({ onChanged }) {
       dateInput.value = (data.date || "").slice(0, 10);
       noteInput.value = data.note || "";
       title.textContent = "Chỉnh sửa khoản thu";
+      loadWallets();
+      if (data.walletId && walletSelect) walletSelect.value = data.walletId;
     } else {
       // mặc định hôm nay
       ensureDefaultDate(dateInput, todayISO());
@@ -141,6 +158,8 @@ export function initIncome({ onChanged }) {
 
     loadIncomePresets();
     presetSelect && (presetSelect.value = "");
+
+    loadWallets();
 
     modal.classList.add("show");
     document.body.style.overflow = "hidden";
@@ -177,6 +196,7 @@ export function initIncome({ onChanged }) {
       amount: parseFloat(amountInput.value),
       date: dateInput.value,
       note: noteInput?.value.trim() || "",
+      walletId: walletSelect?.value || null,
     };
     const id = idInput.value.trim();
 

@@ -129,6 +129,12 @@
                     placeholder="Ghi chú thêm (tuỳ chọn)"
                   />
                 </div>
+                <div class="field">
+                  <label>Chọn ví</label>
+                  <select class="input" id="income-wallet">
+                    <option value="">-- Chọn ví --</option>
+                  </select>
+                </div>
                 <div class="actions">
                   <button type="button" class="btn ghost" data-close>Huỷ</button
                   ><button class="btn primary" type="submit">Lưu</button>
@@ -200,7 +206,12 @@
                     placeholder="Ghi chú thêm (tuỳ chọn)"
                   />
                 </div>
-
+                <div class="field">
+                  <label>Chọn ví</label>
+                  <select class="input" id="expense-wallet">
+                    <option value="">-- Chọn ví --</option>
+                  </select>
+                </div>
                 <div class="actions">
                   <button type="button" class="btn ghost" data-close>
                     Huỷ
@@ -266,6 +277,12 @@
                     placeholder="Ghi chú thêm (tuỳ chọn)"
                   />
                 </div>
+                <div class="field">
+                  <label>Chọn ví</label>
+                  <select class="input" id="tip-wallet">
+                    <option value="">-- Chọn ví --</option>
+                  </select>
+                </div>
                 <div class="actions">
                   <button type="button" class="btn ghost" data-close>
                     Huỷ
@@ -292,6 +309,7 @@
                 Thu nhập
               </button>
               <button class="modal-tab" data-tab="cat-expense">Chi tiêu</button>
+              <button class="modal-tab" data-tab="cat-wallets">Ví</button>
             </div>
 
             <!-- Pages -->
@@ -302,18 +320,21 @@
               <div id="cat-expense" class="cat-page hidden">
                 <ul id="cat-expense-list" class="cat-list"></ul>
               </div>
+              <div id="cat-wallets" class="cat-page hidden">
+                <ul id="wallets-list" class="cat-list"></ul>
+              </div>
             </div>
 
-            <!-- Footer (nút thêm danh mục) -->
+            <!-- Footer  -->
             <div class="cat-footer">
-              <button class="btn primary" id="btn-cat-add">
-                + Thêm danh mục
-              </button>
+              <div class="">
+                <button class="btn primary" id="btn-cat-add">+ Danh mục</button>
+                <button class="btn primary" id="btn-wallet-add">+ Ví</button>
+              </div>
               <button type="button" class="btn ghost" data-close>Đóng</button>
             </div>
 
-            <!-- Form thêm danh mục (ẩn/hiện khi bấm nút) -->
-            <form class="form cat-form" id="cat-form">
+            <form class="form cat-form cat-form--preset" id="cat-form">
               <div class="field">
                 <label>Loại</label>
                 <select class="input" id="cat-type">
@@ -350,6 +371,39 @@
                 </button>
                 <button type="button" class="btn ghost" data-close>Đóng</button>
                 <button class="btn primary" type="submit">Lưu danh mục</button>
+              </div>
+            </form>
+
+            <!-- Form thêm/sửa ví nhanh -->
+            <form class="form cat-form cat-form--wallet" id="wallet-form">
+              <div class="field">
+                <label>Tên ví</label>
+                <input
+                  class="input"
+                  id="wallet-name"
+                  placeholder="Tiền mặt, VCB, MoMo..."
+                  required
+                />
+              </div>
+              <div class="field">
+                <label>Loại</label>
+                <select class="input" id="wallet-type">
+                  <option value="cash">Tiền mặt</option>
+                  <option value="bank">Ngân hàng</option>
+                  <option value="ewallet">Ví điện tử</option>
+                  <option value="other">Khác</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Tiền tệ</label>
+                <input class="input" id="wallet-currency" value="VND" />
+              </div>
+              <div class="actions">
+                <button type="button" class="btn ghost" id="btn-wallet-back">
+                  Quay lại ví
+                </button>
+                <button type="button" class="btn ghost" data-close>Đóng</button>
+                <button class="btn primary" type="submit">Thêm/ Lưu ví</button>
               </div>
             </form>
           </div>

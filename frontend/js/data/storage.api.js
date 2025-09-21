@@ -106,3 +106,48 @@ export async function deletePreset(id) {
   if (!res.ok) throw new Error("Failed to delete preset");
   return res.json();
 }
+
+export async function getWallets() {
+  const res = await fetch(`${BASE}/wallets`);
+  if (!res.ok) throw new Error("Failed to load wallets");
+  return res.json();
+}
+
+export async function createWallet(payload) {
+  const res = await fetch(`${BASE}/wallets`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to create wallet");
+  return res.json();
+}
+
+// Danh mục (presets)
+export async function updatePreset(id, payload) {
+  const res = await fetch(`${BASE}/presets/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to update preset");
+  return res.json();
+}
+
+// Ví (wallets)
+// after
+export async function updateWallet(id, payload) {
+  const res = await fetch(`${BASE}/wallets/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to update wallet");
+  return res.json();
+}
+
+export async function deleteWallet(id) {
+  const res = await fetch(`${BASE}/wallets/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to delete wallet");
+  return res.json();
+}

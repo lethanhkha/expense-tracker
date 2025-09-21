@@ -235,7 +235,8 @@
 
 .income-item:hover .btn.icon,
 .expense-item:hover .btn.icon,
-.tip-item:hover .btn.icon {
+.tip-item:hover .btn.icon,
+.cat-item:hover .btn.icon {
   visibility: visible;
   transform: translateY(0);
 }
@@ -387,16 +388,18 @@
   gap: 10px;
 }
 .cat-item {
+  display: flex;
+  justify-content: space-between;
   border: 1px solid #ececf3;
   border-radius: 12px;
   padding: 10px 12px;
-  display: grid;
   gap: 6px;
 }
 .cat-main {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  /* align-items: center; */
+  /* justify-content: space-between; */
   gap: 8px;
 }
 .cat-source {
@@ -408,8 +411,13 @@
 }
 .cat-actions {
   display: flex;
+  flex-direction: column;
   gap: 6px;
   justify-content: flex-end;
+}
+.cat-group-amount-actions {
+  display: flex;
+  gap: 12px;
 }
 
 .cat-footer {
@@ -461,19 +469,29 @@
 }
 
 /* ===== Category Modal: toggle theo data-mode ===== */
-/* Khi đang ở chế độ form: ẩn Tabs, List, Footer */
-#modal-categories[data-mode="form"] .cat-tabs,
-#modal-categories[data-mode="form"] .cat-pages,
-#modal-categories[data-mode="form"] .cat-footer {
-  display: none !important;
-}
-
-/* Khi đang ở chế độ list: ẩn Form */
+/* 3 chế độ: list | form-preset | form-wallet */
 #modal-categories[data-mode="list"] .cat-form {
   display: none !important;
 }
 
-/* Hiện form khi ở chế độ form, kể cả nếu trước đó có .hidden */
-#modal-categories[data-mode="form"] .cat-form {
+#modal-categories[data-mode^="form"] .cat-tabs,
+#modal-categories[data-mode^="form"] .cat-pages,
+#modal-categories[data-mode^="form"] .cat-footer {
+  display: none !important; /* vào chế độ form: chỉ hiện đúng form */
+}
+
+/* Chỉ mở Form Danh mục */
+#modal-categories[data-mode="form-preset"] .cat-form--preset {
   display: grid !important;
+}
+#modal-categories[data-mode="form-preset"] .cat-form--wallet {
+  display: none !important;
+}
+
+/* Chỉ mở Form Ví */
+#modal-categories[data-mode="form-wallet"] .cat-form--wallet {
+  display: grid !important;
+}
+#modal-categories[data-mode="form-wallet"] .cat-form--preset {
+  display: none !important;
 }
