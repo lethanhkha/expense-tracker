@@ -4,6 +4,7 @@ import {
   createTip,
   updateTip,
   deleteTip,
+  getWallets,
 } from "../data/storage.api.js";
 
 import {
@@ -115,6 +116,7 @@ export function initTip({ onChanged } = {}) {
   const tipTitle = document.getElementById("tip-modal-title");
   const tipOpenBtn = document.getElementById("btn-add-tip");
   const list = document.getElementById("tip-list");
+  const walletSelect = document.getElementById("tip-wallet");
 
   function openTipModal(mode = "add", data = null) {
     tipForm?.reset();
@@ -129,6 +131,9 @@ export function initTip({ onChanged } = {}) {
       );
       document.getElementById("tip-customer").value = data.customer || "";
       document.getElementById("tip-note").value = data.note || "";
+      if (data?.walletId && walletSelect) {
+        walletSelect.value = data.walletId;
+      }
       tipTitle.textContent = "Chỉnh sửa tip";
     } else {
       document.getElementById("tip-id").value = "";
@@ -136,6 +141,8 @@ export function initTip({ onChanged } = {}) {
     }
 
     setupQuickAmountButtons(tipModal, document.getElementById("tip-amount"));
+
+    loadWallets();
 
     tipModal.classList.add("show");
     document.body.style.overflow = "hidden";
@@ -146,27 +153,30 @@ export function initTip({ onChanged } = {}) {
     document.body.style.overflow = "";
   }
 
-  // function submitTipForm(e) {
+  async function loadWallets() {
+    if (!walletSelect) return;
+    walletSelect.innerHTML = `<option value="">-- Chọn ví --</option>`;
+    const wallets = await getWallets();
+    wallets.forEach((w) => {
+      walletSelect.insertAdjacentHTML(
+        "beforeend",
+        `<option value="${w._id}">${w.name} (${w.balance} ${
+          w.currency || "VND"
+        })</option>`
+      );
+    });
+  }
+
   async function submitTipForm(e) {
     e.preventDefault();
     const payload = {
-      // id: document.getElementById("tip-id").value || Date.now().toString(),
       amount: Number(document.getElementById("tip-amount").value) || 0,
       date: document.getElementById("tip-date").value,
       customer: (document.getElementById("tip-customer").value || "").trim(),
       note: (document.getElementById("tip-note").value || "").trim(),
+      walletId: walletSelect?.value || null,
     };
 
-    // let tips = getTips();
-    // const idx = tips.findIndex((t) => t.id === payload.id);
-    // if (idx >= 0) {
-    //   tips[idx] = payload;
-    // } else {
-    //   tips.push(payload);
-    // }
-
-    // saveTips(tips);
-    // renderTips();
     const id = document.getElementById("tip-id").value.trim();
     if (id) {
       await updateTip(id, payload);

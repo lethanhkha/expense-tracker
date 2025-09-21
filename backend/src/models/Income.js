@@ -5,6 +5,11 @@ const incomeSchema = new mongoose.Schema(
     amount: { type: Number, required: true, min: 0 },
     date: { type: Date, required: true },
     note: { type: String, trim: true, default: "", maxlength: 1000 },
+    walletId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Wallet",
+      required: true,
+    },
   },
   { timestamps: true }
 );
