@@ -33,6 +33,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 
 app.get("/", (req, res) => res.json({ ok: true, name: "expense-tracker-api" }));
@@ -43,6 +44,19 @@ app.use("/api/tips", tips);
 app.use("/api/stats", stats);
 app.use("/api/presets", presets);
 app.use("/api/wallets", wallets);
+
+// 404 fallback
+app.use((req, res) => {
+  res.status(404).json({ message: "Not Found" });
+});
+
+// error handler JSON
+app.use((err, req, res, next) => {
+  console.error("❌ API Error:", err);
+  res
+    .status(err.status || 500)
+    .json({ message: err.message || "Internal Error" });
+});
 
 const port = process.env.PORT || 8000;
 

@@ -94,6 +94,19 @@
   display: grid;
 }
 
+/* Giới hạn chiều cao form trong modal và cho phép scroll */
+.modal .dialog .inner {
+  max-height: 85vh; /* cao tối đa 85% màn hình */
+  overflow-y: auto; /* cuộn dọc nếu vượt quá */
+}
+
+/* Nếu muốn áp dụng riêng cho form: */
+.modal .form {
+  max-height: 75vh;
+  overflow-y: auto;
+  padding-right: 6px; /* chừa chỗ scrollbar */
+}
+
 .dialog {
   width: min(640px, 92vw);
   background: #fff;

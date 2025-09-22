@@ -51,28 +51,42 @@ router.delete("/:id", async (req, res) => {
 
 // OPTIONAL: chuyển tiền giữa ví
 router.post("/transfer", async (req, res) => {
-  const { fromId, toId, amount } = req.body;
-  if (!fromId || !toId || !amount || amount <= 0)
-    return res.status(400).json({ message: "Invalid payload" });
+  const { fromWalletId, toWalletId, amount, note, date } = req.body || {};
+  const amt = Number(amount);
+
+  if (!fromWalletId || !toWalletId || !amt)
+    return res.status(400).json({ message: "Thiếu tham số." });
+  if (fromWalletId === toWalletId)
+    return res.status(400).json({ message: "Hai ví phải khác nhau." });
+  if (amt <= 0) return res.status(400).json({ message: "Số tiền phải > 0." });
 
   const session = await mongoose.startSession();
-  session.startTransaction();
   try {
-    const from = await Wallet.findById(fromId).session(session);
-    const to = await Wallet.findById(toId).session(session);
-    if (!from || !to) throw new Error("Wallet not found");
-    if (from.balance < amount) throw new Error("Insufficient funds");
+    session.startTransaction();
 
-    from.balance -= amount;
-    to.balance += amount;
+    const from = await Wallet.findById(fromWalletId).session(session);
+    const to = await Wallet.findById(toWalletId).session(session);
+
+    if (!from || !to) {
+      await session.abortTransaction();
+      return res.status(404).json({ message: "Không tìm thấy ví." });
+    }
+    if ((from.balance ?? 0) < amt) {
+      await session.abortTransaction();
+      return res.status(400).json({ message: "Số dư ví nguồn không đủ." });
+    }
+
+    from.balance = (from.balance ?? 0) - amt;
+    to.balance = (to.balance ?? 0) + amt;
     await from.save({ session });
     await to.save({ session });
 
     await session.commitTransaction();
-    res.json({ ok: true, from, to });
-  } catch (e) {
+    res.status(201).json({ ok: true });
+  } catch (err) {
     await session.abortTransaction();
-    res.status(400).json({ message: e.message });
+    console.error(err);
+    res.status(500).json({ message: "Lỗi chuyển tiền." });
   } finally {
     session.endSession();
   }

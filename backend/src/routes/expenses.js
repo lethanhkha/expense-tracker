@@ -1,6 +1,8 @@
 import { Router } from "express";
 import Expense from "../models/Expense.js";
 import Wallet from "../models/Wallet.js";
+import mongoose from "mongoose";
+
 const r = Router();
 
 r.get("/", async (req, res, next) => {
@@ -19,13 +21,32 @@ r.get("/", async (req, res, next) => {
   }
 });
 
-r.post("/", async (req, res, next) => {
+// routes/expenses.js
+r.post("/", async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
-    const { source, amount, date, note } = req.body;
-    const created = await Expense.create({ source, amount, date, note });
-    res.status(201).json(created);
+    const { source, amount, date, note, walletId } = req.body;
+
+    const [exp] = await Expense.create(
+      [{ source, amount, date, note, walletId }],
+      { session }
+    );
+
+    if (walletId) {
+      const w = await Wallet.findById(walletId).session(session);
+      if (!w) throw new Error("Wallet not found");
+      w.balance -= Number(amount || 0); // chi tiêu -> trừ tiền
+      await w.save({ session });
+    }
+
+    await session.commitTransaction();
+    res.status(201).json(exp);
   } catch (e) {
-    next(e);
+    await session.abortTransaction();
+    res.status(400).json({ message: e.message });
+  } finally {
+    session.endSession();
   }
 });
 
@@ -48,29 +69,6 @@ r.delete("/:id", async (req, res, next) => {
     res.json({ ok: true });
   } catch (e) {
     next(e);
-  }
-});
-
-r.post("/", async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
-    const [exp] = await Expense.create([req.body], { session });
-
-    if (req.body.walletId) {
-      const w = await Wallet.findById(req.body.walletId).session(session);
-      if (!w) throw new Error("Wallet not found");
-      w.balance -= Number(req.body.amount || 0); // khác Income: trừ tiền
-      await w.save({ session });
-    }
-
-    await session.commitTransaction();
-    res.status(201).json(exp);
-  } catch (e) {
-    await session.abortTransaction();
-    res.status(400).json({ message: e.message });
-  } finally {
-    session.endSession();
   }
 });
 

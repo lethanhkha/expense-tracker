@@ -1,19 +1,21 @@
-// const BASE = "https://expense-tracker-backend-03sy.onrender.com/api";
-// const BASE = "https://expense-tracker-production-7cff.up.railway.app/api";
 const BASE = "https://expense-tracker-production-7cff.up.railway.app/api";
 
 export async function getIncomes() {
   return (await fetch(`${BASE}/incomes`)).json();
 }
-export async function createIncome(p) {
-  return (
-    await fetch(`${BASE}/incomes`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(p),
-    })
-  ).json();
+export async function createIncome(payload) {
+  const res = await fetch(`${BASE}/incomes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await safeJson(res);
+  if (!res.ok) {
+    throw new Error(data.message || data.text || `HTTP ${res.status}`);
+  }
+  return data;
 }
+
 export async function updateIncome(id, p) {
   return (
     await fetch(`${BASE}/incomes/${id}`, {
@@ -30,15 +32,27 @@ export async function deleteIncome(id) {
 export async function getExpenses() {
   return (await fetch(`${BASE}/expenses`)).json();
 }
-export async function createExpense(p) {
-  return (
-    await fetch(`${BASE}/expenses`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(p),
-    })
-  ).json();
+
+async function safeJson(res) {
+  const ct = res.headers.get("content-type") || "";
+  if (ct.includes("application/json")) return res.json();
+  const text = await res.text();
+  return { __non_json: true, status: res.status, text };
 }
+
+export async function createExpense(p) {
+  const res = await fetch(`${BASE}/expenses`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(p),
+  });
+  const data = await safeJson(res);
+  if (!res.ok) {
+    throw new Error(data.message || data.text || `HTTP ${res.status}`);
+  }
+  return data;
+}
+
 export async function updateExpense(id, p) {
   return (
     await fetch(`${BASE}/expenses/${id}`, {
@@ -55,15 +69,19 @@ export async function deleteExpense(id) {
 export async function getTips() {
   return (await fetch(`${BASE}/tips`)).json();
 }
-export async function createTip(p) {
-  return (
-    await fetch(`${BASE}/tips`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(p),
-    })
-  ).json();
+export async function createTip(payload) {
+  const res = await fetch(`${BASE}/tips`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await safeJson(res);
+  if (!res.ok) {
+    throw new Error(data.message || data.text || `HTTP ${res.status}`);
+  }
+  return data;
 }
+
 export async function updateTip(id, p) {
   return (
     await fetch(`${BASE}/tips/${id}`, {
@@ -150,4 +168,27 @@ export async function deleteWallet(id) {
   const res = await fetch(`${BASE}/wallets/${id}`, { method: "DELETE" });
   if (!res.ok) throw new Error("Failed to delete wallet");
   return res.json();
+}
+
+export async function transferWallets({
+  fromWalletId,
+  toWalletId,
+  amount,
+  note,
+  date,
+}) {
+  const res = await fetch(`${BASE}/wallets/transfer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      fromWalletId,
+      toWalletId,
+      amount: Number(amount),
+      note,
+      date,
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || "Transfer failed");
+  return data;
 }

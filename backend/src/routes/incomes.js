@@ -1,6 +1,8 @@
 import { Router } from "express";
 import Income from "../models/Income.js";
 import Wallet from "../models/Wallet.js";
+import mongoose from "mongoose";
+
 const r = Router();
 
 r.get("/", async (req, res, next) => {
@@ -14,16 +16,6 @@ r.get("/", async (req, res, next) => {
     }
     const data = await Income.find(q).sort({ date: -1, createdAt: -1 });
     res.json(data);
-  } catch (e) {
-    next(e);
-  }
-});
-
-r.post("/", async (req, res, next) => {
-  try {
-    const { source, amount, date, note } = req.body;
-    const created = await Income.create({ source, amount, date, note });
-    res.status(201).json(created);
   } catch (e) {
     next(e);
   }

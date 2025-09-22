@@ -1,6 +1,8 @@
 import { Router } from "express";
 import Tip from "../models/Tip.js";
 import Wallet from "../models/Wallet.js";
+import mongoose from "mongoose";
+
 const r = Router();
 
 r.get("/", async (req, res, next) => {
@@ -14,16 +16,6 @@ r.get("/", async (req, res, next) => {
     }
     const data = await Tip.find(q).sort({ date: -1, createdAt: -1 });
     res.json(data);
-  } catch (e) {
-    next(e);
-  }
-});
-
-r.post("/", async (req, res, next) => {
-  try {
-    const { amount, date, customer, note } = req.body;
-    const created = await Tip.create({ amount, date, customer, note });
-    res.status(201).json(created);
   } catch (e) {
     next(e);
   }
