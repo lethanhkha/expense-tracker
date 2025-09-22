@@ -495,3 +495,6 @@
 #modal-categories[data-mode="form-wallet"] .cat-form--preset {
   display: none !important;
 }
+
+#open-transfer {
+}

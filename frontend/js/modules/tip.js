@@ -155,7 +155,8 @@ export function initTip({ onChanged } = {}) {
 
   async function loadWallets() {
     if (!walletSelect) return;
-    walletSelect.innerHTML = `<option value="">-- Chọn ví --</option>`;
+    // walletSelect.innerHTML = `<option value="">-- Chọn ví --</option>`;
+    walletSelect.innerHTML = "";
     const wallets = await getWallets();
     wallets.forEach((w) => {
       walletSelect.insertAdjacentHTML(
@@ -165,10 +166,20 @@ export function initTip({ onChanged } = {}) {
         })</option>`
       );
     });
+
+    if (!document.getElementById("tip-id").value && wallets && wallets.length) {
+      walletSelect.value = wallets[0]._id;
+    }
   }
 
   async function submitTipForm(e) {
     e.preventDefault();
+
+    if (walletSelect && walletSelect.options.length === 0) {
+      alert("Vui lòng tạo ít nhất một ví trước khi thêm tip.");
+      return;
+    }
+
     const payload = {
       amount: Number(document.getElementById("tip-amount").value) || 0,
       date: document.getElementById("tip-date").value,

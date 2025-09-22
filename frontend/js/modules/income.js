@@ -90,7 +90,8 @@ export function initIncome({ onChanged }) {
 
   async function loadWallets() {
     if (!walletSelect) return;
-    walletSelect.innerHTML = `<option value="">-- Chọn ví --</option>`;
+    // walletSelect.innerHTML = `<option value="">-- Chọn ví --</option>`;
+    walletSelect.innerHTML = "";
     const wallets = await getWallets();
     (wallets || []).forEach((w) => {
       walletSelect.insertAdjacentHTML(
@@ -100,6 +101,10 @@ export function initIncome({ onChanged }) {
         )} ${w.currency || "VND"})</option>`
       );
     });
+
+    if (!idInput.value && wallets && wallets.length) {
+      walletSelect.value = wallets[0]._id;
+    }
   }
 
   presetSelect?.addEventListener("change", () => {
@@ -190,6 +195,15 @@ export function initIncome({ onChanged }) {
     submitBtn?.setAttribute("disabled", "true");
     cancelBtn?.setAttribute("disabled", "true");
     form.setAttribute("aria-busy", "true");
+
+    if (walletSelect && walletSelect.options.length === 0) {
+      alert("Vui lòng tạo ít nhất một ví trước khi thêm thu nhập.");
+      submitBtn?.removeAttribute("disabled");
+      cancelBtn?.removeAttribute("disabled");
+      form.removeAttribute("aria-busy");
+      submitting = false;
+      return;
+    }
 
     const payload = {
       source: sourceInput.value.trim(),
