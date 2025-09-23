@@ -49,4 +49,5 @@ export const deleteWallet = async (id) => {
 export const transferWallet = (data) => http.post("/wallets/transfer", data);
 
 /** ===== Stats ===== */
-export const getKPI = () => http.get("/stats/kpi");
+// export const getKPI = () => http.get("/stats/kpi");
+export const getKPI = () => http.get(`/stats/kpi?_=${Date.now()}`);

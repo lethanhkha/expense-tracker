@@ -20,6 +20,13 @@ import {
 
 import { showToast } from "../modules/toast.js";
 
+let walletMap = {};
+
+async function refreshWalletMap() {
+  const wallets = await getWallets();
+  walletMap = Object.fromEntries(wallets.map((w) => [String(w._id), w.name]));
+}
+
 /**
  * Return today's date in yyyy‑mm‑dd format (local timezone).
  * @returns {string}
@@ -90,7 +97,7 @@ export function initIncome({ onChanged }) {
     );
   }
 
-  async function loadWallets() {
+  async function loadWallets(preselectId) {
     if (!walletSelect) return;
     // walletSelect.innerHTML = `<option value="">-- Chọn ví --</option>`;
     walletSelect.innerHTML = "";
@@ -104,7 +111,11 @@ export function initIncome({ onChanged }) {
       );
     });
 
-    if (!idInput.value && wallets && wallets.length) {
+    // Ưu tiên chọn theo preselectId khi edit
+    if (preselectId) {
+      walletSelect.value = preselectId;
+    } else if (!idInput.value && wallets && wallets.length) {
+      // add mode -> chọn ví đầu
       walletSelect.value = wallets[0]._id;
     }
   }
@@ -153,20 +164,19 @@ export function initIncome({ onChanged }) {
       dateInput.value = (data.date || "").slice(0, 10);
       noteInput.value = data.note || "";
       title.textContent = "Chỉnh sửa khoản thu";
-      loadWallets();
-      if (data.walletId && walletSelect) walletSelect.value = data.walletId;
+      loadWallets(data.walletId);
     } else {
       // mặc định hôm nay
       ensureDefaultDate(dateInput, todayISO());
       amountInput.value = amountInput.value || 0;
+      loadWallets();
     }
 
     setupQuickAmountButtons(modal, amountInput);
 
     loadIncomePresets();
-    presetSelect && (presetSelect.value = "");
 
-    loadWallets();
+    presetSelect && (presetSelect.value = "");
 
     modal.classList.add("show");
     document.body.style.overflow = "hidden";
@@ -258,6 +268,8 @@ export function initIncome({ onChanged }) {
       listEl.innerHTML = `<li class="muted" style="padding:8px 0;">Chưa có khoản thu nhập nào.</li>`;
       return;
     }
+    // load map ví
+    await refreshWalletMap();
 
     listEl.innerHTML = incomes
       .map(
@@ -292,6 +304,9 @@ export function initIncome({ onChanged }) {
                   </button>
                 </div>
                 <span class="income-amount">+${formatCurrency(i.amount)}</span>
+                <span class="wallet">(Ví: ${escapeHtml(
+                  walletMap[String(i.walletId ?? "")] || "—"
+                )})</span>
               </div>
             </div>
           </li>

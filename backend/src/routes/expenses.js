@@ -1,6 +1,8 @@
 import { Router } from "express";
 import Expense from "../models/Expense.js";
 import Wallet from "../models/Wallet.js";
+import Tip from "../models/Tip.js";
+import Income from "../models/Income.js";
 import mongoose from "mongoose";
 
 const r = Router();
@@ -128,53 +130,34 @@ r.patch("/:id", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const old = await Expense.findById(req.params.id).session(session);
-    if (!old) return res.status(404).json({ message: "Not found" });
+    // Lấy record trước khi sửa để biết ví cũ
+    const before = await Expense.findById(req.params.id).session(session);
+    if (!before) {
+      await session.abortTransaction();
+      return res.status(404).json({ message: "Không tìm thấy khoản chi." });
+    }
 
-    // Lấy dữ liệu mới
-    const { amount, walletId, ...rest } = req.body;
+    // Cập nhật
+    const updated = await Expense.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      session,
+    });
 
-    const amtOld = Number(old.amount || 0);
-    const amtNew = amount != null ? Number(amount) : amtOld;
+    // Xác định các ví bị ảnh hưởng (ví cũ & ví mới nếu đổi)
+    const affected = [
+      String(before.walletId || ""),
+      String(updated.walletId || ""),
+    ].filter(Boolean);
+    const unique = [...new Set(affected)];
 
-    const walletOld = old.walletId?.toString() || null;
-    const walletNew = walletId || walletOld;
-
-    // Cập nhật record
-    old.set({ ...rest, amount: amtNew, walletId: walletNew });
-    await old.save({ session });
-
-    // Cân số dư ví (Expense là GIẢM ví)
-    if (walletOld === walletNew) {
-      // Cùng ví → chỉ bù phần chênh lệch amount (new - old), vì là chi nên trừ tăng/giảm
-      if (amtNew !== amtOld && walletNew) {
-        const w = await Wallet.findById(walletNew).session(session);
-        if (w) {
-          // ví bị giảm theo khoản chi → nếu chi tăng, giảm thêm; nếu chi giảm, cộng bù
-          w.balance -= amtNew - amtOld;
-          await w.save({ session });
-        }
-      }
-    } else {
-      // Khác ví → trả lại ví cũ, trừ ở ví mới
-      if (walletOld) {
-        const wOld = await Wallet.findById(walletOld).session(session);
-        if (wOld) {
-          wOld.balance += amtOld; // hoàn lại vì trước đó đã trừ
-          await wOld.save({ session });
-        }
-      }
-      if (walletNew) {
-        const wNew = await Wallet.findById(walletNew).session(session);
-        if (wNew) {
-          wNew.balance -= amtNew; // trừ ở ví mới
-          await wNew.save({ session });
-        }
-      }
+    // Recompute từng ví bị ảnh hưởng
+    for (const wid of unique) {
+      const bal = await computeWalletBalanceById(wid, session);
+      await Wallet.findByIdAndUpdate(wid, { balance: bal }, { session });
     }
 
     await session.commitTransaction();
-    res.json(old);
+    res.json(updated);
   } catch (e) {
     await session.abortTransaction();
     res.status(400).json({ message: e.message });

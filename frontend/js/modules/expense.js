@@ -20,6 +20,13 @@ import {
 
 import { showToast } from "../modules/toast.js";
 
+let walletMap = {};
+
+async function refreshWalletMap() {
+  const wallets = await getWallets();
+  walletMap = Object.fromEntries(wallets.map((w) => [String(w._id), w.name]));
+}
+
 export function initExpense({ onChanged }) {
   let submitting = false;
 
@@ -62,7 +69,7 @@ export function initExpense({ onChanged }) {
     );
   }
 
-  async function loadWallets() {
+  async function loadWallets(preselectId) {
     if (!walletSelect) return;
     // walletSelect.innerHTML = `<option value="">-- Chọn ví --</option>`;
     walletSelect.innerHTML = "";
@@ -77,7 +84,9 @@ export function initExpense({ onChanged }) {
     });
 
     // Auto chọn ví: ưu tiên ví mặc định, nếu không có thì chọn ví đầu tiên
-    if (!idInput.value && wallets && wallets.length) {
+    if (preselectId) {
+      walletSelect.value = preselectId;
+    } else if (!idInput.value && wallets && wallets.length) {
       walletSelect.value = wallets[0]._id;
     }
   }
@@ -125,16 +134,21 @@ export function initExpense({ onChanged }) {
   }
 
   function openEdit(data) {
-    open();
     if (!data) return;
+    form?.reset();
+    title.textContent = "Chỉnh sửa chi tiêu";
     idInput.value = data._id;
     sourceInput.value = data.source || "";
     amountInput.value = data.amount ?? "";
     dateInput.value = (data.date || "").slice(0, 10);
-    title.textContent = "Chỉnh sửa chi tiêu";
     noteInput.value = data.note || "";
-    loadWallets();
-    if (data.walletId && walletSelect) walletSelect.value = data.walletId;
+    setupQuickAmountButtons(modal, amountInput);
+    loadExpensePresets();
+    presetSelect && (presetSelect.value = "");
+    // chỉ đổ ví 1 lần và preselect
+    loadWallets(data.walletId);
+    modal.classList.add("show");
+    document.body.style.overflow = "hidden";
   }
 
   function close() {
@@ -222,9 +236,7 @@ export function initExpense({ onChanged }) {
     try {
       expenses = await getExpenses();
     } catch (err) {
-      listEl.innerHTML = `<li class="muted" style="padding:8px 0;">Không tải được danh sách chi tiêu: ${
-        err?.message || "lỗi mạng/ máy chủ"
-      }.</li>`;
+      listEl.innerHTML = `<li class="muted" style="padding:8px 0;">Không tải được danh sách chi tiêu: ${err?.message}.</li>`;
       return;
     }
     currentExpenses = expenses;
@@ -233,6 +245,8 @@ export function initExpense({ onChanged }) {
       listEl.innerHTML = `<li class="muted" style="padding:8px 0;">Chưa có khoản chi tiêu nào.</li>`;
       return;
     }
+
+    await refreshWalletMap();
 
     listEl.innerHTML = expenses
       .map(
@@ -265,6 +279,9 @@ export function initExpense({ onChanged }) {
                 </button>
               </div>
               <span class="expense-amount">-${formatCurrency(i.amount)}</span>
+              <span class="wallet">(Ví: ${escapeHtml(
+                walletMap[String(i.walletId ?? "")] || "—"
+              )})</span>
             </div>
           </div>
         </li>
