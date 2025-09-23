@@ -33,16 +33,6 @@ r.put("/:id", async (req, res, next) => {
   }
 });
 
-r.delete("/:id", async (req, res, next) => {
-  try {
-    const deleted = await Income.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: "Not found" });
-    res.json({ ok: true });
-  } catch (e) {
-    next(e);
-  }
-});
-
 r.post("/", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -66,50 +56,107 @@ r.post("/", async (req, res) => {
   }
 });
 
+// r.patch("/:id", async (req, res) => {
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
+//   try {
+//     const old = await Income.findById(req.params.id).session(session);
+//     if (!old) throw new Error("Income not found");
+
+//     const updated = await Income.findByIdAndUpdate(req.params.id, req.body, {
+//       new: true,
+//       session,
+//     });
+
+//     const oldAmount = Number(old.amount || 0);
+//     const newAmount = Number(updated.amount || 0);
+//     const delta = newAmount - oldAmount;
+
+//     const oldWid = String(old.walletId || "");
+//     const newWid = String(updated.walletId || "");
+
+//     if (oldWid && newWid && oldWid === newWid) {
+//       const w = await Wallet.findById(newWid).session(session);
+//       if (w) {
+//         w.balance += delta;
+//         await w.save({ session });
+//       }
+//     } else {
+//       if (oldWid) {
+//         const wOld = await Wallet.findById(oldWid).session(session);
+//         if (wOld) {
+//           wOld.balance -= oldAmount;
+//           await wOld.save({ session });
+//         }
+//       }
+//       if (newWid) {
+//         const wNew = await Wallet.findById(newWid).session(session);
+//         if (wNew) {
+//           wNew.balance += newAmount;
+//           await wNew.save({ session });
+//         }
+//       }
+//     }
+
+//     await session.commitTransaction();
+//     res.json(updated);
+//   } catch (e) {
+//     await session.abortTransaction();
+//     res.status(400).json({ message: e.message });
+//   } finally {
+//     session.endSession();
+//   }
+// });
+
+// ví dụ cho incomes.js
 r.patch("/:id", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     const old = await Income.findById(req.params.id).session(session);
-    if (!old) throw new Error("Income not found");
+    if (!old) return res.status(404).json({ message: "Not found" });
 
-    const updated = await Income.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      session,
-    });
+    const { amount, walletId, ...rest } = req.body;
 
-    const oldAmount = Number(old.amount || 0);
-    const newAmount = Number(updated.amount || 0);
-    const delta = newAmount - oldAmount;
+    const amtOld = Number(old.amount || 0);
+    const amtNew = amount != null ? Number(amount) : amtOld;
+    const walletOld = old.walletId?.toString() || null;
+    const walletNew = walletId || walletOld;
 
-    const oldWid = String(old.walletId || "");
-    const newWid = String(updated.walletId || "");
+    // 1) cập nhật bản ghi
+    old.set({ ...rest, amount: amtNew, walletId: walletNew });
+    await old.save({ session });
 
-    if (oldWid && newWid && oldWid === newWid) {
-      const w = await Wallet.findById(newWid).session(session);
-      if (w) {
-        w.balance += delta;
-        await w.save({ session });
+    // 2) cân lại số dư ví
+    if (walletOld === walletNew) {
+      // cùng ví: chỉ cần chênh lệch amount
+      if (amtNew !== amtOld) {
+        const w = await Wallet.findById(walletNew).session(session);
+        if (w) {
+          w.balance += amtNew - amtOld;
+          await w.save({ session });
+        }
       }
     } else {
-      if (oldWid) {
-        const wOld = await Wallet.findById(oldWid).session(session);
+      // khác ví: trừ ví cũ, cộng ví mới
+      if (walletOld) {
+        const wOld = await Wallet.findById(walletOld).session(session);
         if (wOld) {
-          wOld.balance -= oldAmount;
+          wOld.balance -= amtOld;
           await wOld.save({ session });
         }
       }
-      if (newWid) {
-        const wNew = await Wallet.findById(newWid).session(session);
+      if (walletNew) {
+        const wNew = await Wallet.findById(walletNew).session(session);
         if (wNew) {
-          wNew.balance += newAmount;
+          wNew.balance += amtNew;
           await wNew.save({ session });
         }
       }
     }
 
     await session.commitTransaction();
-    res.json(updated);
+    res.json(old);
   } catch (e) {
     await session.abortTransaction();
     res.status(400).json({ message: e.message });

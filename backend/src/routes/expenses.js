@@ -62,60 +62,119 @@ r.put("/:id", async (req, res, next) => {
   }
 });
 
-r.delete("/:id", async (req, res, next) => {
-  try {
-    const deleted = await Expense.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: "Not found" });
-    res.json({ ok: true });
-  } catch (e) {
-    next(e);
-  }
-});
+// r.delete("/:id", async (req, res, next) => {
+//   try {
+//     const deleted = await Expense.findByIdAndDelete(req.params.id);
+//     if (!deleted) return res.status(404).json({ message: "Not found" });
+//     res.json({ ok: true });
+//   } catch (e) {
+//     next(e);
+//   }
+// });
+
+// r.patch("/:id", async (req, res) => {
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
+//   try {
+//     const old = await Expense.findById(req.params.id).session(session);
+//     if (!old) throw new Error("Expense not found");
+
+//     const updated = await Expense.findByIdAndUpdate(req.params.id, req.body, {
+//       new: true,
+//       session,
+//     });
+
+//     const oldAmount = Number(old.amount || 0);
+//     const newAmount = Number(updated.amount || 0);
+//     const delta = newAmount - oldAmount;
+
+//     const oldWid = String(old.walletId || "");
+//     const newWid = String(updated.walletId || "");
+
+//     if (oldWid && newWid && oldWid === newWid) {
+//       const w = await Wallet.findById(newWid).session(session);
+//       if (w) {
+//         w.balance -= delta;
+//         await w.save({ session });
+//       } // delta cho Expense là trừ
+//     } else {
+//       if (oldWid) {
+//         const wOld = await Wallet.findById(oldWid).session(session);
+//         if (wOld) {
+//           wOld.balance += oldAmount;
+//           await wOld.save({ session });
+//         } // hoàn lại số cũ
+//       }
+//       if (newWid) {
+//         const wNew = await Wallet.findById(newWid).session(session);
+//         if (wNew) {
+//           wNew.balance -= newAmount;
+//           await wNew.save({ session });
+//         } // trừ số mới
+//       }
+//     }
+
+//     await session.commitTransaction();
+//     res.json(updated);
+//   } catch (e) {
+//     await session.abortTransaction();
+//     res.status(400).json({ message: e.message });
+//   } finally {
+//     session.endSession();
+//   }
+// });
 
 r.patch("/:id", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     const old = await Expense.findById(req.params.id).session(session);
-    if (!old) throw new Error("Expense not found");
+    if (!old) return res.status(404).json({ message: "Not found" });
 
-    const updated = await Expense.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      session,
-    });
+    // Lấy dữ liệu mới
+    const { amount, walletId, ...rest } = req.body;
 
-    const oldAmount = Number(old.amount || 0);
-    const newAmount = Number(updated.amount || 0);
-    const delta = newAmount - oldAmount;
+    const amtOld = Number(old.amount || 0);
+    const amtNew = amount != null ? Number(amount) : amtOld;
 
-    const oldWid = String(old.walletId || "");
-    const newWid = String(updated.walletId || "");
+    const walletOld = old.walletId?.toString() || null;
+    const walletNew = walletId || walletOld;
 
-    if (oldWid && newWid && oldWid === newWid) {
-      const w = await Wallet.findById(newWid).session(session);
-      if (w) {
-        w.balance -= delta;
-        await w.save({ session });
-      } // delta cho Expense là trừ
-    } else {
-      if (oldWid) {
-        const wOld = await Wallet.findById(oldWid).session(session);
-        if (wOld) {
-          wOld.balance += oldAmount;
-          await wOld.save({ session });
-        } // hoàn lại số cũ
+    // Cập nhật record
+    old.set({ ...rest, amount: amtNew, walletId: walletNew });
+    await old.save({ session });
+
+    // Cân số dư ví (Expense là GIẢM ví)
+    if (walletOld === walletNew) {
+      // Cùng ví → chỉ bù phần chênh lệch amount (new - old), vì là chi nên trừ tăng/giảm
+      if (amtNew !== amtOld && walletNew) {
+        const w = await Wallet.findById(walletNew).session(session);
+        if (w) {
+          // ví bị giảm theo khoản chi → nếu chi tăng, giảm thêm; nếu chi giảm, cộng bù
+          w.balance -= amtNew - amtOld;
+          await w.save({ session });
+        }
       }
-      if (newWid) {
-        const wNew = await Wallet.findById(newWid).session(session);
+    } else {
+      // Khác ví → trả lại ví cũ, trừ ở ví mới
+      if (walletOld) {
+        const wOld = await Wallet.findById(walletOld).session(session);
+        if (wOld) {
+          wOld.balance += amtOld; // hoàn lại vì trước đó đã trừ
+          await wOld.save({ session });
+        }
+      }
+      if (walletNew) {
+        const wNew = await Wallet.findById(walletNew).session(session);
         if (wNew) {
-          wNew.balance -= newAmount;
+          wNew.balance -= amtNew; // trừ ở ví mới
           await wNew.save({ session });
-        } // trừ số mới
+        }
       }
     }
 
     await session.commitTransaction();
-    res.json(updated);
+    res.json(old);
   } catch (e) {
     await session.abortTransaction();
     res.status(400).json({ message: e.message });

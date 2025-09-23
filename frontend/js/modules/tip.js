@@ -16,15 +16,8 @@ import {
   setupQuickAmountButtons,
 } from "../modules/formatAndQuickbuttons.js";
 
-// const todayStr = () => {
-//   const d = new Date();
-//   return new Date(d.getFullYear(), d.getMonth(), d.getDate())
-//     .toISOString()
-//     .slice(0, 10); // yyyy-mm-dd (local midnight)
-// };
+import { showToast } from "../modules/toast.js";
 
-// Render list
-// function renderTips() {
 let currentTips = [];
 
 async function renderTips() {
@@ -32,7 +25,16 @@ async function renderTips() {
   if (!list) return;
 
   // const tips = getTips();
-  const tips = await getTips();
+  // const tips = await getTips();
+  let tips = [];
+  try {
+    tips = await getTips();
+  } catch (err) {
+    list.innerHTML = `<li class="muted" style="padding:8px 0;">Không tải được danh sách tip: ${
+      err?.message || "lỗi mạng/ máy chủ"
+    }.</li>`;
+    return;
+  }
   currentTips = tips;
   if (tips.length === 0) {
     list.innerHTML = `<li class="muted" style="padding:8px 0;">Chưa có tip nào.</li>`;
@@ -176,7 +178,7 @@ export function initTip({ onChanged } = {}) {
     e.preventDefault();
 
     if (walletSelect && walletSelect.options.length === 0) {
-      alert("Vui lòng tạo ít nhất một ví trước khi thêm tip.");
+      showToast("Vui lòng tạo ít nhất một ví trước khi thêm tip.", "error");
       return;
     }
 
@@ -189,14 +191,18 @@ export function initTip({ onChanged } = {}) {
     };
 
     const id = document.getElementById("tip-id").value.trim();
-    if (id) {
-      await updateTip(id, payload);
-    } else {
-      await createTip(payload);
+
+    try {
+      if (id) await updateTip(id, payload);
+      else await createTip(payload);
+      await renderTips();
+      if (typeof onChanged === "function") onChanged();
+      window.dispatchEvent(new CustomEvent("wallets:refresh"));
+      closeTipModal();
+      showToast("Thêm thành công");
+    } catch (err) {
+      showToast(err?.message || "Có lỗi xảy ra khi lưu tip.", "error");
     }
-    await renderTips();
-    if (typeof onChanged === "function") onChanged();
-    closeTipModal();
   }
 
   // Events
@@ -228,13 +234,52 @@ export function initTip({ onChanged } = {}) {
       return;
     }
 
+    // if (action === "delete") {
+    //   const data = currentTips.find((t) => t._id === id);
+    //   const name = data?.customer ? `của ${data.customer}` : "này";
+    //   if (!confirm(`Xoá tip ${name}?`)) return;
+    //   const ok = await showConfirm(`Xoá tip ${name}?`, {
+    //     confirmText: "Xoá",
+    //     variant: "danger",
+    //   });
+    //   if (!ok) return;
+    //   try {
+    //     await deleteTip(id);
+    //     await renderTips();
+    //     if (typeof onChanged === "function") onChanged();
+    //     showToast("Đã xoá tip.", "success");
+    //   } catch (err) {
+    //     // alert(err?.message || "Xoá tip thất bại.");
+    //     showToast(err?.message || "Xoá tip thất bại.", "error");
+    //   }
+    // }
+
     if (action === "delete") {
       const data = currentTips.find((t) => t._id === id);
       const name = data?.customer ? `của ${data.customer}` : "này";
-      if (!confirm(`Xoá tip ${name}?`)) return;
-      await deleteTip(id);
-      await renderTips();
-      if (typeof onChanged === "function") onChanged();
+
+      const result = await Swal.fire({
+        title: "Bạn chắc chắn?",
+        text: `Xoá tip ${name}?`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Xoá",
+        cancelButtonText: "Huỷ",
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+      });
+
+      if (!result.isConfirmed) return;
+
+      try {
+        await deleteTip(id);
+        await renderTips();
+        onChanged?.();
+        window.dispatchEvent(new CustomEvent("wallets:refresh"));
+        Swal.fire("Đã xoá!", `Tip ${name} đã bị xoá.`, "success");
+      } catch (err) {
+        Swal.fire("Lỗi!", err?.message || "Xoá tip thất bại.", "error");
+      }
     }
   });
 
@@ -243,12 +288,5 @@ export function initTip({ onChanged } = {}) {
   // Trả API giống income/expense
   return {
     renderTips,
-    // getTips,
-    // saveTips,
-    // getClaimableTipsTotal,
   };
 }
-
-// Xuất hàm chính
-// export { initTip, getClaimableTipsTotal };
-// export { initTip };
