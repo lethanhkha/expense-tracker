@@ -1,4 +1,5 @@
-const BASE = "http://localhost:8000/api";
+// const BASE = "http://localhost:8000/api";
+const BASE = "https://expense-tracker-production-7cff.up.railway.app/api";
 
 const DEFAULT_TIMEOUT = 15000;
 
