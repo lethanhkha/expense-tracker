@@ -5,6 +5,33 @@ import Tip from "../models/Tip.js";
 import Income from "../models/Income.js";
 import mongoose from "mongoose";
 
+// đặt ngay trên đầu file expenses.js (sau các import)
+async function computeWalletBalanceById(wid, session) {
+  if (!wid) return 0;
+  const oid = typeof wid === "string" ? new mongoose.Types.ObjectId(wid) : wid;
+  const sumExpr = { $sum: { $toDouble: { $ifNull: ["$amount", 0] } } };
+
+  const [incAgg, expAgg, tipAgg] = await Promise.all([
+    Income.aggregate([
+      { $match: { walletId: oid } },
+      { $group: { _id: null, total: sumExpr } },
+    ]).session(session),
+    Expense.aggregate([
+      { $match: { walletId: oid } },
+      { $group: { _id: null, total: sumExpr } },
+    ]).session(session),
+    Tip.aggregate([
+      { $match: { walletId: oid } },
+      { $group: { _id: null, total: sumExpr } },
+    ]).session(session),
+  ]);
+
+  const sumIncome = Number(incAgg?.[0]?.total || 0);
+  const sumExpense = Number(expAgg?.[0]?.total || 0);
+  const sumTip = Number(tipAgg?.[0]?.total || 0);
+  return sumIncome + sumTip - sumExpense;
+}
+
 const r = Router();
 
 r.get("/", async (req, res, next) => {
