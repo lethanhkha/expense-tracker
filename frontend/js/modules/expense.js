@@ -198,6 +198,8 @@ export function initExpense({ onChanged }) {
       onChanged?.();
       close();
       await renderPromise;
+    } catch (err) {
+      alert(err?.message || "Có lỗi xảy ra khi lưu khoản chi.");
     } finally {
       submitBtn?.removeAttribute("disabled");
       cancelBtn?.removeAttribute("disabled");
@@ -208,7 +210,15 @@ export function initExpense({ onChanged }) {
 
   async function renderExpenses() {
     if (!listEl) return;
-    const expenses = await getExpenses();
+    let expenses = [];
+    try {
+      expenses = await getExpenses();
+    } catch (err) {
+      listEl.innerHTML = `<li class="muted" style="padding:8px 0;">Không tải được danh sách chi tiêu: ${
+        err?.message || "lỗi mạng/ máy chủ"
+      }.</li>`;
+      return;
+    }
     currentExpenses = expenses;
 
     if (expenses.length === 0) {
@@ -275,9 +285,16 @@ export function initExpense({ onChanged }) {
       const data = currentExpenses.find((i) => i._id === id);
       const name = data?.source ? `"${data.source}"` : "khoản chi";
       if (!confirm(`Xoá ${name}?`)) return;
-      await deleteExpense(id);
-      await renderExpenses();
-      onChanged?.();
+      // await deleteExpense(id);
+      // await renderExpenses();
+      // onChanged?.();
+      try {
+        await deleteExpense(id);
+        await renderExpenses();
+        onChanged?.();
+      } catch (err) {
+        alert(err?.message || "Xoá khoản chi thất bại.");
+      }
     }
 
     if (action === "clone") {
@@ -289,9 +306,16 @@ export function initExpense({ onChanged }) {
         date: todayISO(),
         note: orig.note || "",
       };
-      await createExpense(payload);
-      await renderExpenses();
-      onChanged?.();
+      // await createExpense(payload);
+      // await renderExpenses();
+      // onChanged?.();
+      try {
+        await createExpense(payload);
+        await renderExpenses();
+        onChanged?.();
+      } catch (err) {
+        alert(err?.message || "Nhân bản khoản chi thất bại.");
+      }
       return;
     }
   });

@@ -64,14 +64,32 @@ export function initCategories() {
 
   // ===== Presets =====
   async function refreshPresets() {
-    const [inc, exp] = await Promise.all([
-      getPresets("income"),
-      getPresets("expense"),
-    ]);
-    currentIncome = inc || [];
-    currentExpense = exp || [];
-    renderPresetList(listIncome, currentIncome);
-    renderPresetList(listExpense, currentExpense);
+    // const [inc, exp] = await Promise.all([
+    //   getPresets("income"),
+    //   getPresets("expense"),
+    // ]);
+
+    try {
+      const [inc, exp] = await Promise.all([
+        getPresets("income"),
+        getPresets("expense"),
+      ]);
+      currentIncome = inc || [];
+      currentExpense = exp || [];
+      renderPresetList(listIncome, currentIncome);
+      renderPresetList(listExpense, currentExpense);
+    } catch (err) {
+      const msg = `<li class="muted" style="padding:8px 0;">Không tải được danh mục: ${
+        err?.message || "lỗi mạng/ máy chủ"
+      }.</li>`;
+      if (listIncome) listIncome.innerHTML = msg;
+      if (listExpense) listExpense.innerHTML = msg;
+    }
+
+    // currentIncome = inc || [];
+    // currentExpense = exp || [];
+    // renderPresetList(listIncome, currentIncome);
+    // renderPresetList(listExpense, currentExpense);
   }
 
   function renderPresetList(ul, arr) {
@@ -111,8 +129,17 @@ export function initCategories() {
   // ===== Wallets =====
   async function refreshWallets() {
     if (!walletsList) return;
-    const wallets = await getWallets();
-    currentWallets = wallets || [];
+    // const wallets = await getWallets();
+    // currentWallets = wallets || [];
+    try {
+      const wallets = await getWallets();
+      currentWallets = wallets || [];
+    } catch (err) {
+      walletsList.innerHTML = `<li class="muted" style="padding:8px 0;">Không tải được ví: ${
+        err?.message || "lỗi mạng/ máy chủ"
+      }.</li>`;
+      return;
+    }
     if (currentWallets.length === 0) {
       walletsList.innerHTML = `<li class="muted" style="padding:8px 0;">Chưa có ví nào.</li>`;
       return;
@@ -201,16 +228,30 @@ export function initCategories() {
     };
     if (!payload.source) return alert("Tên danh mục không được trống.");
 
-    if (catForm.dataset.editId) {
-      await updatePreset(catForm.dataset.editId, payload);
-      delete catForm.dataset.editId;
-    } else {
-      await createPreset(payload);
+    // if (catForm.dataset.editId) {
+    //   await updatePreset(catForm.dataset.editId, payload);
+    //   delete catForm.dataset.editId;
+    // } else {
+    //   await createPreset(payload);
+    // }
+    // e.target.reset();
+    // await refreshPresets();
+    // modal.dataset.mode = "list";
+    // switchTab(payload.type === "expense" ? "cat-expense" : "cat-income");
+    try {
+      if (catForm.dataset.editId) {
+        await updatePreset(catForm.dataset.editId, payload);
+        delete catForm.dataset.editId;
+      } else {
+        await createPreset(payload);
+      }
+      e.target.reset();
+      await refreshPresets();
+      modal.dataset.mode = "list";
+      switchTab(payload.type === "expense" ? "cat-expense" : "cat-income");
+    } catch (err) {
+      alert(err?.message || "Lưu danh mục thất bại.");
     }
-    e.target.reset();
-    await refreshPresets();
-    modal.dataset.mode = "list";
-    switchTab(payload.type === "expense" ? "cat-expense" : "cat-income");
   });
 
   walletForm?.addEventListener("submit", async (e) => {
@@ -222,17 +263,32 @@ export function initCategories() {
     };
     if (!payload.name) return alert("Tên ví không được trống.");
 
-    if (walletForm.dataset.editId) {
-      await updateWallet(walletForm.dataset.editId, payload);
-      delete walletForm.dataset.editId;
-    } else {
-      await createWallet(payload);
+    // if (walletForm.dataset.editId) {
+    //   await updateWallet(walletForm.dataset.editId, payload);
+    //   delete walletForm.dataset.editId;
+    // } else {
+    //   await createWallet(payload);
+    // }
+    // e.target.reset();
+    // walletCurrencyEl.value = "VND";
+    // await refreshWallets();
+    // modal.dataset.mode = "list";
+    // switchTab("cat-wallets");
+    try {
+      if (walletForm.dataset.editId) {
+        await updateWallet(walletForm.dataset.editId, payload);
+        delete walletForm.dataset.editId;
+      } else {
+        await createWallet(payload);
+      }
+      e.target.reset();
+      walletCurrencyEl.value = "VND";
+      await refreshWallets();
+      modal.dataset.mode = "list";
+      switchTab("cat-wallets");
+    } catch (err) {
+      alert(err?.message || "Lưu ví thất bại.");
     }
-    e.target.reset();
-    walletCurrencyEl.value = "VND";
-    await refreshWallets();
-    modal.dataset.mode = "list";
-    switchTab("cat-wallets");
   });
 
   // Click actions (edit/delete)
@@ -261,8 +317,14 @@ export function initCategories() {
 
     if (action === "delete") {
       if (!confirm("Xoá danh mục này?")) return;
-      await deletePreset(id);
-      await refreshPresets();
+      // await deletePreset(id);
+      // await refreshPresets();
+      try {
+        await deletePreset(id);
+        await refreshPresets();
+      } catch (err) {
+        alert(err?.message || "Xoá danh mục thất bại.");
+      }
     }
 
     if (action === "edit-wallet") {
@@ -277,8 +339,14 @@ export function initCategories() {
 
     if (action === "delete-wallet") {
       if (!confirm("Xoá ví này?")) return;
-      await deleteWallet(id);
-      await refreshWallets();
+      // await deleteWallet(id);
+      // await refreshWallets();
+      try {
+        await deleteWallet(id);
+        await refreshWallets();
+      } catch (err) {
+        alert(err?.message || "Xoá ví thất bại.");
+      }
     }
   });
 

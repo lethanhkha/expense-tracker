@@ -222,6 +222,8 @@ export function initIncome({ onChanged }) {
       if (typeof onChanged === "function") onChanged();
       close();
       await renderPromise;
+    } catch (err) {
+      alert(err?.message || "Có lỗi xảy ra khi lưu khoản thu.");
     } finally {
       submitBtn?.removeAttribute("disabled");
       cancelBtn?.removeAttribute("disabled");
@@ -232,7 +234,16 @@ export function initIncome({ onChanged }) {
 
   async function renderIncomes() {
     if (!listEl) return;
-    const incomes = await getIncomes();
+    // const incomes = await getIncomes();
+    let incomes = [];
+    try {
+      incomes = await getIncomes();
+    } catch (err) {
+      listEl.innerHTML = `<li class="muted" style="padding:8px 0;">Không tải được danh sách thu nhập: ${
+        err?.message || "lỗi mạng/ máy chủ"
+      }.</li>`;
+      return;
+    }
     currentIncomes = incomes;
 
     if (incomes.length === 0) {
@@ -300,9 +311,16 @@ export function initIncome({ onChanged }) {
       const data = currentIncomes.find((i) => i._id === id);
       const name = data?.source ? `"${data.source}"` : "mục thu nhập";
       if (!confirm(`Xoá ${name}?`)) return;
-      await deleteIncome(id);
-      await renderIncomes();
-      if (typeof onChanged === "function") onChanged();
+      // await deleteIncome(id);
+      // await renderIncomes();
+      // if (typeof onChanged === "function") onChanged();
+      try {
+        await deleteIncome(id);
+        await renderIncomes();
+        if (typeof onChanged === "function") onChanged();
+      } catch (err) {
+        alert(err?.message || "Xoá khoản thu thất bại.");
+      }
     }
 
     if (action === "clone") {
@@ -314,9 +332,16 @@ export function initIncome({ onChanged }) {
         date: todayISO(), // clone nhưng mặc định ngày hôm nay
         note: orig.note || "",
       };
-      await createIncome(payload);
-      await renderIncomes();
-      if (typeof onChanged === "function") onChanged();
+      // await createIncome(payload);
+      // await renderIncomes();
+      // if (typeof onChanged === "function") onChanged();
+      try {
+        await createIncome(payload);
+        await renderIncomes();
+        if (typeof onChanged === "function") onChanged();
+      } catch (err) {
+        alert(err?.message || "Nhân bản khoản thu thất bại.");
+      }
       return;
     }
   });
