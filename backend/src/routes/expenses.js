@@ -62,15 +62,15 @@ r.put("/:id", async (req, res, next) => {
   }
 });
 
-r.delete("/:id", async (req, res, next) => {
-  try {
-    const deleted = await Expense.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: "Not found" });
-    res.json({ ok: true });
-  } catch (e) {
-    next(e);
-  }
-});
+// r.delete("/:id", async (req, res, next) => {
+//   try {
+//     const deleted = await Expense.findByIdAndDelete(req.params.id);
+//     if (!deleted) return res.status(404).json({ message: "Not found" });
+//     res.json({ ok: true });
+//   } catch (e) {
+//     next(e);
+//   }
+// });
 
 r.patch("/:id", async (req, res) => {
   const session = await mongoose.startSession();

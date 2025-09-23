@@ -58,6 +58,15 @@ app.use((err, req, res, next) => {
     .json({ message: err.message || "Internal Error" });
 });
 
+app.get("/env.js", (_req, res) => {
+  const cfg = {
+    FRONTEND_API_BASE: process.env.FRONTEND_API_BASE || "/api",
+  };
+  res
+    .type("application/javascript")
+    .send(`window.__ENV__ = ${JSON.stringify(cfg)};`);
+});
+
 const port = process.env.PORT || 8000;
 
 connectDB(process.env.MONGODB_URI)
