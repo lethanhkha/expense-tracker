@@ -1,9 +1,37 @@
 import { Router } from "express";
 import Tip from "../models/Tip.js";
 import Wallet from "../models/Wallet.js";
+import Income from "../models/Income.js";
+import Expense from "../models/Expense.js";
 import mongoose from "mongoose";
 
 const r = Router();
+
+async function computeWalletBalanceById(wid, session) {
+  if (!wid) return 0;
+  const oid = typeof wid === "string" ? new mongoose.Types.ObjectId(wid) : wid;
+  const sumExpr = { $sum: { $toDouble: { $ifNull: ["$amount", 0] } } };
+
+  const [incAgg, expAgg, tipAgg] = await Promise.all([
+    Income.aggregate([
+      { $match: { walletId: oid } },
+      { $group: { _id: null, total: sumExpr } },
+    ]).session(session),
+    Expense.aggregate([
+      { $match: { walletId: oid } },
+      { $group: { _id: null, total: sumExpr } },
+    ]).session(session),
+    Tip.aggregate([
+      { $match: { walletId: oid } },
+      { $group: { _id: null, total: sumExpr } },
+    ]).session(session),
+  ]);
+
+  const sumIncome = Number(incAgg?.[0]?.total || 0);
+  const sumExpense = Number(expAgg?.[0]?.total || 0);
+  const sumTip = Number(tipAgg?.[0]?.total || 0);
+  return sumIncome + sumTip - sumExpense;
+}
 
 r.get("/", async (req, res, next) => {
   try {
@@ -122,52 +150,34 @@ r.patch("/:id", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const old = await Tip.findById(req.params.id).session(session);
-    if (!old) return res.status(404).json({ message: "Not found" });
+    // Lấy record trước khi sửa để biết ví cũ
+    const before = await Tip.findById(req.params.id).session(session);
+    if (!before) {
+      await session.abortTransaction();
+      return res.status(404).json({ message: "Không tìm thấy tip." });
+    }
 
-    // Lấy dữ liệu mới
-    const { amount, walletId, ...rest } = req.body;
+    // Cập nhật
+    const updated = await Tip.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      session,
+    });
 
-    const amtOld = Number(old.amount || 0);
-    const amtNew = amount != null ? Number(amount) : amtOld;
+    // Ví ảnh hưởng
+    const affected = [
+      String(before.walletId || ""),
+      String(updated.walletId || ""),
+    ].filter(Boolean);
+    const unique = [...new Set(affected)];
 
-    const walletOld = old.walletId?.toString() || null;
-    const walletNew = walletId || walletOld;
-
-    // Cập nhật record
-    old.set({ ...rest, amount: amtNew, walletId: walletNew });
-    await old.save({ session });
-
-    // Cân số dư ví (Tip là THU → CỘNG ví)
-    if (walletOld === walletNew) {
-      // cùng ví → bù phần chênh lệch amount
-      if (amtNew !== amtOld && walletNew) {
-        const w = await Wallet.findById(walletNew).session(session);
-        if (w) {
-          w.balance += amtNew - amtOld; // thu tăng thì cộng thêm, thu giảm thì trừ bớt
-          await w.save({ session });
-        }
-      }
-    } else {
-      // khác ví → trừ khỏi ví cũ, cộng vào ví mới
-      if (walletOld) {
-        const wOld = await Wallet.findById(walletOld).session(session);
-        if (wOld) {
-          wOld.balance -= amtOld; // hoàn tác cộng trước đó
-          await wOld.save({ session });
-        }
-      }
-      if (walletNew) {
-        const wNew = await Wallet.findById(walletNew).session(session);
-        if (wNew) {
-          wNew.balance += amtNew;
-          await wNew.save({ session });
-        }
-      }
+    // Recompute từng ví
+    for (const wid of unique) {
+      const bal = await computeWalletBalanceById(wid, session);
+      await Wallet.findByIdAndUpdate(wid, { balance: bal }, { session });
     }
 
     await session.commitTransaction();
-    res.json(old);
+    res.json(updated);
   } catch (e) {
     await session.abortTransaction();
     res.status(400).json({ message: e.message });

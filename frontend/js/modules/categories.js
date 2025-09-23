@@ -15,6 +15,13 @@ import {
 
 import { showToast } from "../modules/toast.js";
 
+let walletMap = {};
+
+// async function refreshWalletMap() {
+//   const wallets = await getWallets();
+//   walletMap = Object.fromEntries(wallets.map((w) => [w._id, w.name]));
+// }
+
 export function initCategories() {
   const openBtn = document.getElementById("categoryButton");
   const modal = document.getElementById("modal-categories");
@@ -130,6 +137,8 @@ export function initCategories() {
 
   // ===== Wallets =====
   async function refreshWallets() {
+    const wallets = await getWallets();
+    walletMap = Object.fromEntries(wallets.map((w) => [w._id, w.name]));
     if (!walletsList) return;
     // const wallets = await getWallets();
     // currentWallets = wallets || [];
@@ -170,6 +179,8 @@ export function initCategories() {
       </li>`
       )
       .join("");
+
+    return wallets;
   }
 
   window.addEventListener("wallets:refresh", () => {

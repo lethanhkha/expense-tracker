@@ -27,7 +27,7 @@ function formatCurrency(amount) {
 }
 
 async function updateKPIs() {
-  const { totalIncome, totalExpense, totalTip, balance } = await getKPI();
+  const { totalIncome, totalExpense, totalTip, totalBalance } = await getKPI();
   document.getElementById("kpi-income").textContent = formatCurrency(
     totalIncome || 0
   );
@@ -38,7 +38,7 @@ async function updateKPIs() {
     totalTip || 0
   );
   document.getElementById("kpi-balance").textContent = formatCurrency(
-    balance || 0
+    totalBalance || 0
   );
 }
 

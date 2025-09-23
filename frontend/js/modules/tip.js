@@ -20,6 +20,13 @@ import { showToast } from "../modules/toast.js";
 
 let currentTips = [];
 
+let walletMap = {};
+
+async function refreshWalletMap() {
+  const wallets = await getWallets();
+  walletMap = Object.fromEntries(wallets.map((w) => [String(w._id), w.name]));
+}
+
 async function renderTips() {
   const list = document.getElementById("tip-list");
   if (!list) return;
@@ -41,32 +48,7 @@ async function renderTips() {
     return;
   }
 
-  // list.innerHTML = tips
-  //   .map(
-  //     (t) => `
-  //     <li class="tip-item" data-id="${t._id}">
-  //       <div class="tip-group-source-date">
-  //         <span class="tip-amount">${formatCurrency(t.amount)}</span>
-  //         <span class="tip-date">${t.date?.slice(0, 10)}</span>
-  //         ${
-  //           t.customer
-  //             ? `<span class="income-source">${escapeHtml(t.customer)}</span>`
-  //             : ""
-  //         }
-  //         ${t.note ? `<span class="muted">${escapeHtml(t.note)}</span>` : ""}
-  //       </div>
-  //       <div class="item-actions">
-  //         <button class="btn ghost icon" type="button" data-action="edit" aria-label="Chỉnh sửa tip">
-  //           ✏️
-  //         </button>
-  //         <button class="btn ghost icon" type="button" data-action="delete" aria-label="Xoá tip">
-  //           🗑️
-  //         </button>
-  //       </div>
-  //     </li>`
-  //   )
-
-  // <span class="tip-customer">${escapeHtml(i.customer)}</span>
+  await refreshWalletMap();
 
   list.innerHTML = tips
     .map(
@@ -103,6 +85,9 @@ async function renderTips() {
                   </button>
                 </div>
                 <span class="tip-amount">+${formatCurrency(i.amount)}</span>
+                <span class="wallet">(Ví: ${escapeHtml(
+                  walletMap[String(i.walletId ?? "")] || "—"
+                )})</span>
               </div>
             </div>
           </li>
@@ -123,6 +108,7 @@ export function initTip({ onChanged } = {}) {
   function openTipModal(mode = "add", data = null) {
     tipForm?.reset();
     ensureDefaultDate(document.getElementById("tip-date"), todayISO());
+    let preselect = null;
 
     if (mode === "edit" && data) {
       document.getElementById("tip-id").value = data._id;
@@ -133,9 +119,9 @@ export function initTip({ onChanged } = {}) {
       );
       document.getElementById("tip-customer").value = data.customer || "";
       document.getElementById("tip-note").value = data.note || "";
-      if (data?.walletId && walletSelect) {
-        walletSelect.value = data.walletId;
-      }
+
+      preselect = data?.walletId ? String(data.walletId) : null;
+
       tipTitle.textContent = "Chỉnh sửa tip";
     } else {
       document.getElementById("tip-id").value = "";
@@ -144,7 +130,7 @@ export function initTip({ onChanged } = {}) {
 
     setupQuickAmountButtons(tipModal, document.getElementById("tip-amount"));
 
-    loadWallets();
+    loadWallets(preselect);
 
     tipModal.classList.add("show");
     document.body.style.overflow = "hidden";
@@ -155,7 +141,7 @@ export function initTip({ onChanged } = {}) {
     document.body.style.overflow = "";
   }
 
-  async function loadWallets() {
+  async function loadWallets(preselectId) {
     if (!walletSelect) return;
     // walletSelect.innerHTML = `<option value="">-- Chọn ví --</option>`;
     walletSelect.innerHTML = "";
@@ -169,7 +155,10 @@ export function initTip({ onChanged } = {}) {
       );
     });
 
-    if (!document.getElementById("tip-id").value && wallets && wallets.length) {
+    const isEdit = !!document.getElementById("tip-id").value;
+    if (preselectId) {
+      walletSelect.value = preselectId;
+    } else if (!isEdit && wallets && wallets.length) {
       walletSelect.value = wallets[0]._id;
     }
   }

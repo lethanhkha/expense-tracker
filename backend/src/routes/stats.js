@@ -1,37 +1,39 @@
-import { Router } from "express";
+// routes/stats.js
+import express from "express";
 import Income from "../models/Income.js";
 import Expense from "../models/Expense.js";
 import Tip from "../models/Tip.js";
+import Wallet from "../models/Wallet.js";
 
-const r = Router();
+const r = express.Router();
 
-r.get("/kpi", async (req, res, next) => {
-  try {
-    // tổng income
-    const [{ totalIncome = 0 } = {}] = await Income.aggregate([
-      { $group: { _id: null, totalIncome: { $sum: "$amount" } } },
-    ]);
+r.get("/kpi", async (_req, res) => {
+  const sumExpr = { $sum: { $toDouble: { $ifNull: ["$amount", 0] } } };
 
-    // tổng expense
-    const [{ totalExpense = 0 } = {}] = await Expense.aggregate([
-      { $group: { _id: null, totalExpense: { $sum: "$amount" } } },
-    ]);
+  const [incAgg, expAgg, tipAgg, wallets] = await Promise.all([
+    Income.aggregate([{ $group: { _id: null, total: sumExpr } }]),
+    Expense.aggregate([{ $group: { _id: null, total: sumExpr } }]),
+    Tip.aggregate([{ $group: { _id: null, total: sumExpr } }]),
+    Wallet.find({ archived: false }, { balance: 1 }).lean(), // chỉ để so sánh
+  ]);
 
-    // tip nhận được = tip có date < hôm nay
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  const totalIncome = Number(incAgg?.[0]?.total || 0);
+  const totalExpense = Number(expAgg?.[0]?.total || 0);
+  const totalTip = Number(tipAgg?.[0]?.total || 0);
 
-    const [{ totalTip = 0 } = {}] = await Tip.aggregate([
-      { $match: { date: { $lt: today } } },
-      { $group: { _id: null, totalTip: { $sum: "$amount" } } },
-    ]);
+  const totalBalance = totalIncome + totalTip - totalExpense;
+  const sumWallets = wallets.reduce(
+    (acc, w) => acc + Number(w.balance || 0),
+    0
+  );
 
-    const balance = totalIncome - totalExpense + totalTip;
-
-    res.json({ totalIncome, totalExpense, totalTip, balance });
-  } catch (e) {
-    next(e);
-  }
+  res.json({
+    totalIncome,
+    totalExpense,
+    totalTip,
+    totalBalance, // ← dùng giá trị này cho dashboard
+    sumWallets, // ← giá trị tham chiếu/đối chiếu
+  });
 });
 
 export default r;
