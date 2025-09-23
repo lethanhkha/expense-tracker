@@ -172,6 +172,10 @@ export function initCategories() {
       .join("");
   }
 
+  window.addEventListener("wallets:refresh", () => {
+    refreshWallets();
+  });
+
   // ===== Open/Close =====
   function open() {
     modal.classList.add("show");
@@ -257,17 +261,6 @@ export function initCategories() {
     };
     if (!payload.name) return showToast("Tên ví không được trống", "error");
 
-    // if (walletForm.dataset.editId) {
-    //   await updateWallet(walletForm.dataset.editId, payload);
-    //   delete walletForm.dataset.editId;
-    // } else {
-    //   await createWallet(payload);
-    // }
-    // e.target.reset();
-    // walletCurrencyEl.value = "VND";
-    // await refreshWallets();
-    // modal.dataset.mode = "list";
-    // switchTab("cat-wallets");
     try {
       if (walletForm.dataset.editId) {
         await updateWallet(walletForm.dataset.editId, payload);
@@ -278,12 +271,11 @@ export function initCategories() {
       e.target.reset();
       walletCurrencyEl.value = "VND";
       await refreshWallets();
+      window.dispatchEvent(new CustomEvent("wallets:refresh"));
       modal.dataset.mode = "list";
-      switchTab("cat-wallets");
-      showToast("Thêm thành công");
+      showToast("Lưu ví thành công", "success");
     } catch (err) {
-      // alert(err?.message || "Lưu ví thất bại.");
-      showToast("Lưu ví thất bại.", "error");
+      showToast(err?.message || "Lưu ví thất bại.", "error");
     }
   });
 

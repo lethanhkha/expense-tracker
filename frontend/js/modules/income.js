@@ -226,6 +226,7 @@ export function initIncome({ onChanged }) {
       // đóng modal NGAY, rồi mới đợi render (đỡ cảm giác lag)
       const renderPromise = renderIncomes();
       if (typeof onChanged === "function") onChanged();
+      window.dispatchEvent(new CustomEvent("wallets:refresh"));
       close();
       await renderPromise;
       showToast("Thêm thành công", "success");
@@ -353,6 +354,7 @@ export function initIncome({ onChanged }) {
         await deleteIncome(id);
         await renderIncomes();
         onChanged?.();
+        window.dispatchEvent(new CustomEvent("wallets:refresh"));
         Swal.fire("Đã xoá!", `${name} đã bị xoá.`, "success");
       } catch (err) {
         Swal.fire("Lỗi!", err?.message || "Xoá khoản thu thất bại.", "error");
@@ -386,6 +388,7 @@ export function initIncome({ onChanged }) {
         await createIncome(payload);
         await renderIncomes();
         if (typeof onChanged === "function") onChanged();
+        window.dispatchEvent(new CustomEvent("wallets:refresh"));
         showToast("Đã nhân bản khoản thu.", "success");
       } catch (err) {
         showToast(err?.message || "Nhân bản khoản thu thất bại.", "error");

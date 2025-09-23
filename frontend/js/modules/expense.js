@@ -202,6 +202,7 @@ export function initExpense({ onChanged }) {
       else await createExpense(payload);
       const renderPromise = renderExpenses();
       onChanged?.();
+      window.dispatchEvent(new CustomEvent("wallets:refresh"));
       close();
       await renderPromise;
       showToast("Thêm thành công");
@@ -324,6 +325,7 @@ export function initExpense({ onChanged }) {
         await deleteExpense(id);
         await renderExpenses();
         onChanged?.();
+        window.dispatchEvent(new CustomEvent("wallets:refresh"));
         Swal.fire("Đã xoá!", "Khoản chi đã bị xoá.", "success");
       } catch (err) {
         Swal.fire("Lỗi!", err?.message || "Xoá khoản chi thất bại.", "error");
@@ -354,6 +356,7 @@ export function initExpense({ onChanged }) {
         await createExpense(payload);
         await renderExpenses();
         onChanged?.();
+        window.dispatchEvent(new CustomEvent("wallets:refresh"));
         showToast("Đã nhân bản khoản chi.", "success");
       } catch (err) {
         showToast(err?.message || "Nhân bản khoản chi thất bại.", "error");

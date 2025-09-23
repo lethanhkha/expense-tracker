@@ -197,6 +197,7 @@ export function initTip({ onChanged } = {}) {
       else await createTip(payload);
       await renderTips();
       if (typeof onChanged === "function") onChanged();
+      window.dispatchEvent(new CustomEvent("wallets:refresh"));
       closeTipModal();
       showToast("Thêm thành công");
     } catch (err) {
@@ -274,6 +275,7 @@ export function initTip({ onChanged } = {}) {
         await deleteTip(id);
         await renderTips();
         onChanged?.();
+        window.dispatchEvent(new CustomEvent("wallets:refresh"));
         Swal.fire("Đã xoá!", `Tip ${name} đã bị xoá.`, "success");
       } catch (err) {
         Swal.fire("Lỗi!", err?.message || "Xoá tip thất bại.", "error");
@@ -286,12 +288,5 @@ export function initTip({ onChanged } = {}) {
   // Trả API giống income/expense
   return {
     renderTips,
-    // getTips,
-    // saveTips,
-    // getClaimableTipsTotal,
   };
 }
-
-// Xuất hàm chính
-// export { initTip, getClaimableTipsTotal };
-// export { initTip };

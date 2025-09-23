@@ -235,7 +235,8 @@ export const deletePreset = async (id) => {
 };
 
 /** ===== Wallets ===== */
-export const getWallets = () => http.get("/wallets");
+// export const getWallets = () => http.get("/wallets");
+export const getWallets = () => http.get(`/wallets?_=${Date.now()}`);
 export const createWallet = (data) => http.post("/wallets", data);
 export const updateWallet = (id, data) => http.patch(`/wallets/${id}`, data);
 export const deleteWallet = async (id) => {

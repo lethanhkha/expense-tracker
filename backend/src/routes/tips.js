@@ -66,50 +66,108 @@ r.post("/", async (req, res) => {
   }
 });
 
+// r.patch("/:id", async (req, res) => {
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
+//   try {
+//     const old = await Tip.findById(req.params.id).session(session);
+//     if (!old) throw new Error("Tip not found");
+
+//     const updated = await Tip.findByIdAndUpdate(req.params.id, req.body, {
+//       new: true,
+//       session,
+//     });
+
+//     const oldAmount = Number(old.amount || 0);
+//     const newAmount = Number(updated.amount || 0);
+//     const delta = newAmount - oldAmount;
+
+//     const oldWid = String(old.walletId || "");
+//     const newWid = String(updated.walletId || "");
+
+//     if (oldWid && newWid && oldWid === newWid) {
+//       const w = await Wallet.findById(newWid).session(session);
+//       if (w) {
+//         w.balance += delta;
+//         await w.save({ session });
+//       }
+//     } else {
+//       if (oldWid) {
+//         const wOld = await Wallet.findById(oldWid).session(session);
+//         if (wOld) {
+//           wOld.balance -= oldAmount;
+//           await wOld.save({ session });
+//         }
+//       }
+//       if (newWid) {
+//         const wNew = await Wallet.findById(newWid).session(session);
+//         if (wNew) {
+//           wNew.balance += newAmount;
+//           await wNew.save({ session });
+//         }
+//       }
+//     }
+
+//     await session.commitTransaction();
+//     res.json(updated);
+//   } catch (e) {
+//     await session.abortTransaction();
+//     res.status(400).json({ message: e.message });
+//   } finally {
+//     session.endSession();
+//   }
+// });
+
 r.patch("/:id", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     const old = await Tip.findById(req.params.id).session(session);
-    if (!old) throw new Error("Tip not found");
+    if (!old) return res.status(404).json({ message: "Not found" });
 
-    const updated = await Tip.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      session,
-    });
+    // Lấy dữ liệu mới
+    const { amount, walletId, ...rest } = req.body;
 
-    const oldAmount = Number(old.amount || 0);
-    const newAmount = Number(updated.amount || 0);
-    const delta = newAmount - oldAmount;
+    const amtOld = Number(old.amount || 0);
+    const amtNew = amount != null ? Number(amount) : amtOld;
 
-    const oldWid = String(old.walletId || "");
-    const newWid = String(updated.walletId || "");
+    const walletOld = old.walletId?.toString() || null;
+    const walletNew = walletId || walletOld;
 
-    if (oldWid && newWid && oldWid === newWid) {
-      const w = await Wallet.findById(newWid).session(session);
-      if (w) {
-        w.balance += delta;
-        await w.save({ session });
+    // Cập nhật record
+    old.set({ ...rest, amount: amtNew, walletId: walletNew });
+    await old.save({ session });
+
+    // Cân số dư ví (Tip là THU → CỘNG ví)
+    if (walletOld === walletNew) {
+      // cùng ví → bù phần chênh lệch amount
+      if (amtNew !== amtOld && walletNew) {
+        const w = await Wallet.findById(walletNew).session(session);
+        if (w) {
+          w.balance += amtNew - amtOld; // thu tăng thì cộng thêm, thu giảm thì trừ bớt
+          await w.save({ session });
+        }
       }
     } else {
-      if (oldWid) {
-        const wOld = await Wallet.findById(oldWid).session(session);
+      // khác ví → trừ khỏi ví cũ, cộng vào ví mới
+      if (walletOld) {
+        const wOld = await Wallet.findById(walletOld).session(session);
         if (wOld) {
-          wOld.balance -= oldAmount;
+          wOld.balance -= amtOld; // hoàn tác cộng trước đó
           await wOld.save({ session });
         }
       }
-      if (newWid) {
-        const wNew = await Wallet.findById(newWid).session(session);
+      if (walletNew) {
+        const wNew = await Wallet.findById(walletNew).session(session);
         if (wNew) {
-          wNew.balance += newAmount;
+          wNew.balance += amtNew;
           await wNew.save({ session });
         }
       }
     }
 
     await session.commitTransaction();
-    res.json(updated);
+    res.json(old);
   } catch (e) {
     await session.abortTransaction();
     res.status(400).json({ message: e.message });
