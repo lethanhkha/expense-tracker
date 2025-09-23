@@ -199,7 +199,11 @@ export function initIncome({ onChanged }) {
     form.setAttribute("aria-busy", "true");
 
     if (walletSelect && walletSelect.options.length === 0) {
-      alert("Vui lòng tạo ít nhất một ví trước khi thêm thu nhập.");
+      // alert("Vui lòng tạo ít nhất một ví trước khi thêm thu nhập.");
+      showToast(
+        "Vui lòng tạo ít nhất một ví trước khi thêm thu nhập.",
+        "error"
+      );
       submitBtn?.removeAttribute("disabled");
       cancelBtn?.removeAttribute("disabled");
       form.removeAttribute("aria-busy");
@@ -224,6 +228,7 @@ export function initIncome({ onChanged }) {
       if (typeof onChanged === "function") onChanged();
       close();
       await renderPromise;
+      showToast("Thêm thành công", "success");
     } catch (err) {
       showToast(err?.message || "Có lỗi khi lưu khoản thu.", "error");
     } finally {
@@ -309,35 +314,74 @@ export function initIncome({ onChanged }) {
       return;
     }
 
+    // if (action === "delete") {
+    //   const data = currentIncomes.find((i) => i._id === id);
+    //   const name = data?.source ? `"${data.source}"` : "mục thu nhập";
+    //   const ok = await showConfirm(`Bạn có chắc chắn muốn xoá ${name}?`, {
+    //     confirmText: "Xoá",
+    //     variant: "danger",
+    //   });
+    //   if (!ok) return;
+    //   try {
+    //     await deleteIncome(id);
+    //     await renderIncomes();
+    //     if (typeof onChanged === "function") onChanged();
+    //     showToast("Đã xoá khoản thu.", "success");
+    //   } catch (err) {
+    //     showToast(err?.message || "Xoá khoản thu thất bại.", "error");
+    //   }
+    // }
+
     if (action === "delete") {
       const data = currentIncomes.find((i) => i._id === id);
-      const name = data?.source ? `"${data.source}"` : "mục thu nhập";
-      if (!confirm(`Xoá ${name}?`)) return;
-      // await deleteIncome(id);
-      // await renderIncomes();
-      // if (typeof onChanged === "function") onChanged();
+      const name = data?.source ? `"${data.source}"` : "khoản thu";
+
+      const result = await Swal.fire({
+        title: "Bạn chắc chắn?",
+        text: `Xoá ${name}?`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Xoá",
+        cancelButtonText: "Huỷ",
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+      });
+
+      if (!result.isConfirmed) return;
+
       try {
         await deleteIncome(id);
         await renderIncomes();
-        if (typeof onChanged === "function") onChanged();
-        showToast("Đã xoá khoản thu.", "success");
+        onChanged?.();
+        Swal.fire("Đã xoá!", `${name} đã bị xoá.`, "success");
       } catch (err) {
-        showToast(err?.message || "Xoá khoản thu thất bại.", "error");
+        Swal.fire("Lỗi!", err?.message || "Xoá khoản thu thất bại.", "error");
       }
     }
 
     if (action === "clone") {
       const orig = currentIncomes.find((i) => i._id === id);
       if (!orig) return;
+
+      // Legacy record (tạo trước khi có Ví) -> bắt user cập nhật ví trước
+      if (!orig.walletId) {
+        showToast(
+          "Khoản thu này được tạo trước khi bạn có Ví. Hãy chỉnh sửa và chọn Ví trước khi nhân bản.",
+          "error"
+        );
+        // Mở luôn modal ở chế độ sửa để user gán Ví
+        open({ mode: "edit", data: orig });
+        return;
+      }
+
       const payload = {
         source: orig.source,
         amount: orig.amount,
-        date: todayISO(), // clone nhưng mặc định ngày hôm nay
+        date: todayISO(),
         note: orig.note || "",
+        walletId: orig.walletId || null,
       };
-      // await createIncome(payload);
-      // await renderIncomes();
-      // if (typeof onChanged === "function") onChanged();
+
       try {
         await createIncome(payload);
         await renderIncomes();

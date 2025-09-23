@@ -191,20 +191,14 @@ export function initTip({ onChanged } = {}) {
     };
 
     const id = document.getElementById("tip-id").value.trim();
-    // if (id) {
-    //   await updateTip(id, payload);
-    // } else {
-    //   await createTip(payload);
-    // }
-    // await renderTips();
-    // if (typeof onChanged === "function") onChanged();
-    // closeTipModal();
+
     try {
       if (id) await updateTip(id, payload);
       else await createTip(payload);
       await renderTips();
       if (typeof onChanged === "function") onChanged();
       closeTipModal();
+      showToast("Thêm thành công");
     } catch (err) {
       showToast(err?.message || "Có lỗi xảy ra khi lưu tip.", "error");
     }
@@ -239,19 +233,50 @@ export function initTip({ onChanged } = {}) {
       return;
     }
 
+    // if (action === "delete") {
+    //   const data = currentTips.find((t) => t._id === id);
+    //   const name = data?.customer ? `của ${data.customer}` : "này";
+    //   if (!confirm(`Xoá tip ${name}?`)) return;
+    //   const ok = await showConfirm(`Xoá tip ${name}?`, {
+    //     confirmText: "Xoá",
+    //     variant: "danger",
+    //   });
+    //   if (!ok) return;
+    //   try {
+    //     await deleteTip(id);
+    //     await renderTips();
+    //     if (typeof onChanged === "function") onChanged();
+    //     showToast("Đã xoá tip.", "success");
+    //   } catch (err) {
+    //     // alert(err?.message || "Xoá tip thất bại.");
+    //     showToast(err?.message || "Xoá tip thất bại.", "error");
+    //   }
+    // }
+
     if (action === "delete") {
       const data = currentTips.find((t) => t._id === id);
       const name = data?.customer ? `của ${data.customer}` : "này";
-      if (!confirm(`Xoá tip ${name}?`)) return;
-      // await deleteTip(id);
-      // await renderTips();
-      // if (typeof onChanged === "function") onChanged();
+
+      const result = await Swal.fire({
+        title: "Bạn chắc chắn?",
+        text: `Xoá tip ${name}?`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Xoá",
+        cancelButtonText: "Huỷ",
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+      });
+
+      if (!result.isConfirmed) return;
+
       try {
         await deleteTip(id);
         await renderTips();
-        if (typeof onChanged === "function") onChanged();
+        onChanged?.();
+        Swal.fire("Đã xoá!", `Tip ${name} đã bị xoá.`, "success");
       } catch (err) {
-        alert(err?.message || "Xoá tip thất bại.");
+        Swal.fire("Lỗi!", err?.message || "Xoá tip thất bại.", "error");
       }
     }
   });
