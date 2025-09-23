@@ -18,6 +18,8 @@ import {
   escapeHtml,
 } from "../modules/formatAndQuickbuttons.js";
 
+import { showToast } from "../modules/toast.js";
+
 export function initExpense({ onChanged }) {
   let submitting = false;
 
@@ -199,7 +201,7 @@ export function initExpense({ onChanged }) {
       close();
       await renderPromise;
     } catch (err) {
-      alert(err?.message || "Có lỗi xảy ra khi lưu khoản chi.");
+      showToast(err?.message || "Có lỗi xảy ra khi lưu khoản chi.");
     } finally {
       submitBtn?.removeAttribute("disabled");
       cancelBtn?.removeAttribute("disabled");
@@ -292,8 +294,9 @@ export function initExpense({ onChanged }) {
         await deleteExpense(id);
         await renderExpenses();
         onChanged?.();
+        showToast("Đã xoá khoản chi.", "success");
       } catch (err) {
-        alert(err?.message || "Xoá khoản chi thất bại.");
+        showToast(err?.message || "Xoá khoản chi thất bại.", "error");
       }
     }
 
@@ -313,8 +316,9 @@ export function initExpense({ onChanged }) {
         await createExpense(payload);
         await renderExpenses();
         onChanged?.();
+        showToast("Đã nhân bản khoản chi.", "success");
       } catch (err) {
-        alert(err?.message || "Nhân bản khoản chi thất bại.");
+        showToast(err?.message || "Nhân bản khoản chi thất bại.", "error");
       }
       return;
     }

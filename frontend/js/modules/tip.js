@@ -16,15 +16,8 @@ import {
   setupQuickAmountButtons,
 } from "../modules/formatAndQuickbuttons.js";
 
-// const todayStr = () => {
-//   const d = new Date();
-//   return new Date(d.getFullYear(), d.getMonth(), d.getDate())
-//     .toISOString()
-//     .slice(0, 10); // yyyy-mm-dd (local midnight)
-// };
+import { showToast } from "../modules/toast.js";
 
-// Render list
-// function renderTips() {
 let currentTips = [];
 
 async function renderTips() {
@@ -185,7 +178,7 @@ export function initTip({ onChanged } = {}) {
     e.preventDefault();
 
     if (walletSelect && walletSelect.options.length === 0) {
-      alert("Vui lòng tạo ít nhất một ví trước khi thêm tip.");
+      showToast("Vui lòng tạo ít nhất một ví trước khi thêm tip.", "error");
       return;
     }
 
@@ -213,7 +206,7 @@ export function initTip({ onChanged } = {}) {
       if (typeof onChanged === "function") onChanged();
       closeTipModal();
     } catch (err) {
-      alert(err?.message || "Có lỗi xảy ra khi lưu tip.");
+      showToast(err?.message || "Có lỗi xảy ra khi lưu tip.", "error");
     }
   }
 

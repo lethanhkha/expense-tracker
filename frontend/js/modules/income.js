@@ -18,6 +18,8 @@ import {
   escapeHtml,
 } from "../modules/formatAndQuickbuttons.js";
 
+import { showToast } from "../modules/toast.js";
+
 /**
  * Return today's date in yyyy‑mm‑dd format (local timezone).
  * @returns {string}
@@ -223,7 +225,7 @@ export function initIncome({ onChanged }) {
       close();
       await renderPromise;
     } catch (err) {
-      alert(err?.message || "Có lỗi xảy ra khi lưu khoản thu.");
+      showToast(err?.message || "Có lỗi khi lưu khoản thu.", "error");
     } finally {
       submitBtn?.removeAttribute("disabled");
       cancelBtn?.removeAttribute("disabled");
@@ -318,8 +320,9 @@ export function initIncome({ onChanged }) {
         await deleteIncome(id);
         await renderIncomes();
         if (typeof onChanged === "function") onChanged();
+        showToast("Đã xoá khoản thu.", "success");
       } catch (err) {
-        alert(err?.message || "Xoá khoản thu thất bại.");
+        showToast(err?.message || "Xoá khoản thu thất bại.", "error");
       }
     }
 
@@ -339,8 +342,9 @@ export function initIncome({ onChanged }) {
         await createIncome(payload);
         await renderIncomes();
         if (typeof onChanged === "function") onChanged();
+        showToast("Đã nhân bản khoản thu.", "success");
       } catch (err) {
-        alert(err?.message || "Nhân bản khoản thu thất bại.");
+        showToast(err?.message || "Nhân bản khoản thu thất bại.", "error");
       }
       return;
     }

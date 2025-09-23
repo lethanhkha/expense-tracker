@@ -13,6 +13,8 @@ import {
   deleteWallet,
 } from "../data/storage.api.js";
 
+import { showToast } from "../modules/toast.js";
+
 export function initCategories() {
   const openBtn = document.getElementById("categoryButton");
   const modal = document.getElementById("modal-categories");
@@ -226,8 +228,8 @@ export function initCategories() {
       amount: Number(amountEl.value) || 0,
       note: (noteEl.value || "").trim(),
     };
-    if (!payload.source) return alert("Tên danh mục không được trống.");
-
+    if (!payload.source)
+      return showToast("Tên danh mục không được trống.", "error");
     // if (catForm.dataset.editId) {
     //   await updatePreset(catForm.dataset.editId, payload);
     //   delete catForm.dataset.editId;
@@ -250,7 +252,7 @@ export function initCategories() {
       modal.dataset.mode = "list";
       switchTab(payload.type === "expense" ? "cat-expense" : "cat-income");
     } catch (err) {
-      alert(err?.message || "Lưu danh mục thất bại.");
+      showToast(err?.message || "Lưu danh mục thất bại.", "error");
     }
   });
 
