@@ -31,8 +31,6 @@ async function renderTips() {
   const list = document.getElementById("tip-list");
   if (!list) return;
 
-  // const tips = getTips();
-  // const tips = await getTips();
   let tips = [];
   try {
     tips = await getTips();
@@ -84,16 +82,17 @@ async function renderTips() {
                   🗑️
                   </button>
                 </div>
-                <span class="tip-amount">+${formatCurrency(i.amount)}</span>
-                <span class="wallet">(Ví: ${escapeHtml(
-                  walletMap[String(i.walletId ?? "")] || "—"
-                )})</span>
+                <div class="group-amount-wallet">
+                  <span class="tip-amount">+${formatCurrency(i.amount)}</span>
+                  <span class="wallet">(Ví: ${escapeHtml(
+                    walletMap[String(i.walletId ?? "")] || "—"
+                  )})</span>
+                </div>
               </div>
             </div>
           </li>
           `
     )
-    // <span class="income-date">${t.date}</span>
     .join("");
 }
 

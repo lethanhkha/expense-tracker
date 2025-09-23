@@ -278,10 +278,12 @@ export function initExpense({ onChanged }) {
                   📄
                 </button>
               </div>
-              <span class="expense-amount">-${formatCurrency(i.amount)}</span>
-              <span class="wallet">(Ví: ${escapeHtml(
-                walletMap[String(i.walletId ?? "")] || "—"
-              )})</span>
+              <div class="group-amount-wallet">
+                <span class="expense-amount">-${formatCurrency(i.amount)}</span>
+                <span class="wallet">(Ví: ${escapeHtml(
+                  walletMap[String(i.walletId ?? "")] || "—"
+                )})</span>
+              </div>
             </div>
           </div>
         </li>

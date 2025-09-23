@@ -303,10 +303,14 @@ export function initIncome({ onChanged }) {
                     📄
                   </button>
                 </div>
-                <span class="income-amount">+${formatCurrency(i.amount)}</span>
-                <span class="wallet">(Ví: ${escapeHtml(
-                  walletMap[String(i.walletId ?? "")] || "—"
-                )})</span>
+                <div class="group-amount-wallet">
+                  <span class="income-amount">+${formatCurrency(
+                    i.amount
+                  )}</span>
+                  <span class="wallet">(Ví: ${escapeHtml(
+                    walletMap[String(i.walletId ?? "")] || "—"
+                  )})</span>
+                </div>
               </div>
             </div>
           </li>

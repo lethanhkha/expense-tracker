@@ -497,4 +497,12 @@
 }
 
 #open-transfer {
+  margin-top: 8px;
+}
+
+.group-amount-wallet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
