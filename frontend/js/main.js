@@ -16,6 +16,9 @@ function showTab(tabName) {
   document
     .querySelector(`.tab-btn[data-tab="${tabName}"]`)
     ?.classList.add("active");
+  if (tabName === "dashboard") {
+    updateKPIs();
+  }
 }
 navButtons.forEach((btn) =>
   btn.addEventListener("click", () => showTab(btn.dataset.tab))
@@ -55,3 +58,5 @@ document.addEventListener("DOMContentLoaded", () => {
   updateKPIs();
   showTab("dashboard"); // mở tab Dashboard mặc định
 });
+
+window.addEventListener("kpi:refresh", updateKPIs);

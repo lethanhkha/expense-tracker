@@ -10,6 +10,7 @@ const tipSchema = new mongoose.Schema(
       ref: "Wallet",
       required: true,
     },
+    received: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
