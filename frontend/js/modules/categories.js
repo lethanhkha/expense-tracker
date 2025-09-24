@@ -15,13 +15,6 @@ import {
 
 import { showToast } from "../modules/toast.js";
 
-let walletMap = {};
-
-// async function refreshWalletMap() {
-//   const wallets = await getWallets();
-//   walletMap = Object.fromEntries(wallets.map((w) => [w._id, w.name]));
-// }
-
 export function initCategories() {
   const openBtn = document.getElementById("categoryButton");
   const modal = document.getElementById("modal-categories");
@@ -73,11 +66,6 @@ export function initCategories() {
 
   // ===== Presets =====
   async function refreshPresets() {
-    // const [inc, exp] = await Promise.all([
-    //   getPresets("income"),
-    //   getPresets("expense"),
-    // ]);
-
     try {
       const [inc, exp] = await Promise.all([
         getPresets("income"),
@@ -94,11 +82,6 @@ export function initCategories() {
       if (listIncome) listIncome.innerHTML = msg;
       if (listExpense) listExpense.innerHTML = msg;
     }
-
-    // currentIncome = inc || [];
-    // currentExpense = exp || [];
-    // renderPresetList(listIncome, currentIncome);
-    // renderPresetList(listExpense, currentExpense);
   }
 
   function renderPresetList(ul, arr) {
@@ -137,11 +120,7 @@ export function initCategories() {
 
   // ===== Wallets =====
   async function refreshWallets() {
-    const wallets = await getWallets();
-    walletMap = Object.fromEntries(wallets.map((w) => [w._id, w.name]));
     if (!walletsList) return;
-    // const wallets = await getWallets();
-    // currentWallets = wallets || [];
     try {
       const wallets = await getWallets();
       currentWallets = wallets || [];
@@ -179,8 +158,6 @@ export function initCategories() {
       </li>`
       )
       .join("");
-
-    return wallets;
   }
 
   window.addEventListener("wallets:refresh", () => {
@@ -314,19 +291,6 @@ export function initCategories() {
       catForm.dataset.editId = id;
     }
 
-    // if (action === "delete") {
-    //   if (!confirm("Xoá danh mục này?")) return;
-    //   // await deletePreset(id);
-    //   // await refreshPresets();
-    //   try {
-    //     await deletePreset(id);
-    //     await refreshPresets();
-    //   } catch (err) {
-    //     // alert(err?.message || "Xoá danh mục thất bại.");
-    //     showToast("Xoá danh mục thất bại.", "error");
-    //   }
-    // }
-
     if (action === "delete") {
       const result = await Swal.fire({
         title: "Bạn chắc chắn?",
@@ -359,19 +323,6 @@ export function initCategories() {
       walletCurrencyEl.value = w.currency || "VND";
       walletForm.dataset.editId = id;
     }
-
-    // if (action === "delete-wallet") {
-    //   if (!confirm("Xoá ví này?")) return;
-    //   // await deleteWallet(id);
-    //   // await refreshWallets();
-    //   try {
-    //     await deleteWallet(id);
-    //     await refreshWallets();
-    //   } catch (err) {
-    //     // alert(err?.message || "Xoá ví thất bại.");
-    //     showToast("Xoá ví thất bại.", "error");
-    //   }
-    // }
 
     if (action === "delete-wallet") {
       const result = await Swal.fire({

@@ -67,5 +67,3 @@ export const http = {
   patch: (url, body, opts) => request(url, { ...opts, method: "PATCH", body }),
   delete: (url, opts) => request(url, { ...opts, method: "DELETE" }),
 };
-
-export { BASE };

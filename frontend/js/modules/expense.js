@@ -1,5 +1,5 @@
-// js/modules/expense.js
-// import { getExpenses, saveExpenses } from "../data/storage.local.js";
+import { showToast } from "../modules/toast.js";
+
 import {
   getExpenses,
   createExpense,
@@ -17,8 +17,6 @@ import {
   ensureDefaultDate,
   escapeHtml,
 } from "../modules/formatAndQuickbuttons.js";
-
-import { showToast } from "../modules/toast.js";
 
 let walletMap = {};
 
@@ -71,7 +69,6 @@ export function initExpense({ onChanged }) {
 
   async function loadWallets(preselectId) {
     if (!walletSelect) return;
-    // walletSelect.innerHTML = `<option value="">-- Chọn ví --</option>`;
     walletSelect.innerHTML = "";
     const wallets = await getWallets();
     wallets.forEach((w) => {
@@ -200,7 +197,6 @@ export function initExpense({ onChanged }) {
     };
 
     if (!payload.walletId) {
-      // alert("Vui lòng chọn ví cho khoản chi.");
       showToast("Vui lòng chọn ví cho khoản chi.", "error");
       submitting = false;
       submitBtn?.removeAttribute("disabled");
@@ -289,7 +285,6 @@ export function initExpense({ onChanged }) {
         </li>
         `
       )
-      // <span class="expense-amount">-${formatCurrency(i.amount)}</span>
       .join("");
   }
 
@@ -307,24 +302,6 @@ export function initExpense({ onChanged }) {
       openEdit(data);
       return;
     }
-
-    // if (action === "delete") {
-    //   const data = currentExpenses.find((i) => i._id === id);
-    //   const name = data?.source ? `"${data.source}"` : "khoản chi";
-    //   const ok = await showConfirm(`Bạn có chắc chắn muốn xoá ${name}?`, {
-    //     confirmText: "Xoá",
-    //     variant: "danger",
-    //   });
-    //   if (!ok) return;
-    //   try {
-    //     await deleteExpense(id);
-    //     await renderExpenses();
-    //     onChanged?.();
-    //     showToast("Đã xoá khoản chi.", "success");
-    //   } catch (err) {
-    //     showToast(err?.message || "Xoá khoản chi thất bại.", "error");
-    //   }
-    // }
 
     if (action === "delete") {
       const result = await Swal.fire({

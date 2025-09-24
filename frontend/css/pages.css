@@ -71,58 +71,6 @@
 }
 
 /* Dashboard */
-/* KPIs */
-.kpis {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-  margin-bottom: 22px;
-  width: 100%;
-}
-.kpi {
-  background-color: var(--panel);
-  border-radius: var(--radius);
-  padding: 18px;
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  box-shadow: 0 1px 0 #ececf3;
-}
-
-.kpi .icon {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-}
-
-.kpi .value {
-  font-size: 28px;
-  font-weight: 800;
-}
-
-.kpi .label {
-  color: var(--muted);
-  font-weight: 600;
-}
-
-.kpi.balance .icon {
-  background: #f1ecff;
-  color: var(--purple);
-}
-.kpi.income .icon {
-  background: #fff0e8;
-  color: var(--orange);
-}
-.kpi.expense .icon {
-  background: #ffecef;
-  color: var(--red);
-}
-.kpi.tip .icon {
-  background: #ffe6f0;
-  color: var(--pink);
-}
 
 /* Income */
 /* Income items */
@@ -145,13 +93,6 @@
   align-items: center;
   padding: 8px 12px;
   border-radius: 8px;
-  /* display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 8px;
-  border-radius: 8px;
-  border: 1px solid #ececf3;
-  background: #fff; */
 }
 
 .income-group-source-date,
@@ -198,51 +139,6 @@
 .income-date {
   font-size: 0.9rem;
 }
-
-/* Tip */
-/* #tip-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.tip-item {
-  flex: 0 0 calc(50% - 12px);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  border-radius: 8px;
-}
-
-.tip-customer {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #2a2b3a;
-}
-
-.tip-group-customer-date-note {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.tip-group-date-note,
-.income-group-date-note,
-.expense-group-date-note {
-  display: flex;
-}
-
-.tip-amount {
-  font-weight: 700;
-  padding: 12px;
-  border-radius: 12px;
-  color: green;
-  background: #f2f9f5;
-} */
 
 #tip-list {
   list-style: none;
@@ -335,14 +231,6 @@
 .tip-item input[type="checkbox"] {
   transform: scale(1.1);
   cursor: pointer;
-}
-
-.income-item:hover .btn.icon,
-.expense-item:hover .btn.icon,
-.tip-item:hover .btn.icon,
-.cat-item:hover .btn.icon {
-  visibility: visible;
-  transform: translateY(0);
 }
 
 /* ============================================= */
@@ -460,29 +348,6 @@
   }
 }
 
-/* ===== Category Modal ===== */
-.cat-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.tab-btn.modal-tab {
-  flex: 1;
-  padding: 10px 0;
-  border-radius: 12px;
-  border: none;
-  background: #f2f2fb;
-  color: #4d4f68;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s;
-}
-.tab-btn.modal-tab.active {
-  background: var(--purple);
-  color: #fff;
-  box-shadow: 0 6px 20px rgba(123, 97, 255, 0.2);
-}
-
 .cat-list {
   list-style: none;
   padding: 0;
@@ -502,8 +367,6 @@
 .cat-main {
   display: flex;
   flex-direction: column;
-  /* align-items: center; */
-  /* justify-content: space-between; */
   gap: 8px;
 }
 .cat-source {

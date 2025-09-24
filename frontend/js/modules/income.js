@@ -1,5 +1,5 @@
-// js/modules/income.js
-// import { getIncomes, saveIncomes } from "../data/storage.local.js";
+import { showToast } from "../modules/toast.js";
+
 import {
   getIncomes,
   createIncome,
@@ -18,24 +18,11 @@ import {
   escapeHtml,
 } from "../modules/formatAndQuickbuttons.js";
 
-import { showToast } from "../modules/toast.js";
-
 let walletMap = {};
 
 async function refreshWalletMap() {
   const wallets = await getWallets();
   walletMap = Object.fromEntries(wallets.map((w) => [String(w._id), w.name]));
-}
-
-/**
- * Return today's date in yyyy‑mm‑dd format (local timezone).
- * @returns {string}
- */
-function todayStr() {
-  const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate())
-    .toISOString()
-    .slice(0, 10);
 }
 
 /**
@@ -209,7 +196,6 @@ export function initIncome({ onChanged }) {
     form.setAttribute("aria-busy", "true");
 
     if (walletSelect && walletSelect.options.length === 0) {
-      // alert("Vui lòng tạo ít nhất một ví trước khi thêm thu nhập.");
       showToast(
         "Vui lòng tạo ít nhất một ví trước khi thêm thu nhập.",
         "error"
@@ -252,7 +238,6 @@ export function initIncome({ onChanged }) {
 
   async function renderIncomes() {
     if (!listEl) return;
-    // const incomes = await getIncomes();
     let incomes = [];
     try {
       incomes = await getIncomes();
@@ -333,24 +318,6 @@ export function initIncome({ onChanged }) {
       if (data) open({ mode: "edit", data });
       return;
     }
-
-    // if (action === "delete") {
-    //   const data = currentIncomes.find((i) => i._id === id);
-    //   const name = data?.source ? `"${data.source}"` : "mục thu nhập";
-    //   const ok = await showConfirm(`Bạn có chắc chắn muốn xoá ${name}?`, {
-    //     confirmText: "Xoá",
-    //     variant: "danger",
-    //   });
-    //   if (!ok) return;
-    //   try {
-    //     await deleteIncome(id);
-    //     await renderIncomes();
-    //     if (typeof onChanged === "function") onChanged();
-    //     showToast("Đã xoá khoản thu.", "success");
-    //   } catch (err) {
-    //     showToast(err?.message || "Xoá khoản thu thất bại.", "error");
-    //   }
-    // }
 
     if (action === "delete") {
       const data = currentIncomes.find((i) => i._id === id);
