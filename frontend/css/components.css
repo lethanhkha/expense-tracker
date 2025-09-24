@@ -9,6 +9,11 @@
     box-shadow 0.18s ease, transform 0.12s ease;
 }
 
+.btn:focus-visible {
+  outline: 2px solid #b8a7ff;
+  outline-offset: 2px;
+}
+
 .btn.icon {
   padding: 8px;
   border-radius: 10px;
@@ -60,7 +65,7 @@
 .card {
   background-color: var(--panel);
   border-radius: var(--radius);
-  box-shadow: 0 1px 0 #ececf3, 0 8px 30px rgba(0, 0, 0, 0.03);
+  box-shadow: var(--shadow-card);
 }
 
 .card .inner {
@@ -195,5 +200,70 @@
   to {
     opacity: 0;
     transform: translateY(-10px);
+  }
+}
+
+/* KPI card */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 22px;
+  width: 100%;
+}
+.kpi {
+  background-color: var(--panel);
+  border-radius: var(--radius);
+  padding: 18px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  box-shadow: 0 1px 0 #ececf3;
+}
+.kpi .icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+}
+.kpi .value {
+  font-size: 28px;
+  font-weight: 800;
+}
+.kpi .label {
+  color: var(--muted);
+  font-weight: 600;
+}
+.kpi.balance .icon {
+  background: #f1ecff;
+  color: var(--purple);
+}
+.kpi.income .icon {
+  background: #fff0e8;
+  color: var(--orange);
+}
+.kpi.expense .icon {
+  background: #ffecef;
+  color: var(--red);
+}
+.kpi.tip .icon {
+  background: #ffe6f0;
+  color: var(--pink);
+}
+
+/* Hover-reveal icon buttons cho mọi item dạng list */
+.income-item:hover .btn.icon,
+.expense-item:hover .btn.icon,
+.tip-item:hover .btn.icon,
+.cat-item:hover .btn.icon {
+  visibility: visible;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
   }
 }

@@ -1,4 +1,3 @@
-// import { getTips, saveTips } from "../data/storage.local.js";
 import {
   getTips,
   createTip,
@@ -10,7 +9,6 @@ import {
 
 import {
   formatCurrency,
-  formatDateDisplayTip,
   todayISO,
   ensureDefaultDate,
   escapeHtml,
@@ -166,7 +164,6 @@ export function initTip({ onChanged } = {}) {
 
   async function loadWallets(preselectId) {
     if (!walletSelect) return;
-    // walletSelect.innerHTML = `<option value="">-- Chọn ví --</option>`;
     walletSelect.innerHTML = "";
     const wallets = await getWallets();
     wallets.forEach((w) => {

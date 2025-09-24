@@ -54,3 +54,9 @@ export const getKPI = () => http.get(`/stats/kpi?_=${Date.now()}`);
 
 export const updateTipReceived = (id, state) =>
   http.patch(`/tips/${id}/received`, { received: state });
+
+// ==== Debts ====
+export const getDebts = (q) => http.get("/debts", { params: q });
+export const createDebt = (payload) => http.post("/debts", payload);
+export const updateDebt = (id, payload) => http.patch(`/debts/${id}`, payload);
+export const deleteDebt = (id) => http.delete(`/debts/${id}`);
