@@ -5,6 +5,7 @@ import {
   updateTip,
   deleteTip,
   getWallets,
+  updateTipReceived,
 } from "../data/storage.api.js";
 
 import {
@@ -26,6 +27,13 @@ async function refreshWalletMap() {
   const wallets = await getWallets();
   walletMap = Object.fromEntries(wallets.map((w) => [String(w._id), w.name]));
 }
+function groupBy(arr, keyFn) {
+  return arr.reduce((acc, item) => {
+    const key = keyFn(item);
+    (acc[key] = acc[key] || []).push(item);
+    return acc;
+  }, {});
+}
 
 async function renderTips() {
   const list = document.getElementById("tip-list");
@@ -35,64 +43,80 @@ async function renderTips() {
   try {
     tips = await getTips();
   } catch (err) {
-    list.innerHTML = `<li class="muted" style="padding:8px 0;">Không tải được danh sách tip: ${
-      err?.message || "lỗi mạng/ máy chủ"
-    }.</li>`;
+    list.innerHTML = `<li class="muted">Không tải được danh sách tip.</li>`;
     return;
   }
   currentTips = tips;
   if (tips.length === 0) {
-    list.innerHTML = `<li class="muted" style="padding:8px 0;">Chưa có tip nào.</li>`;
+    list.innerHTML = `<li class="muted">Chưa có tip nào.</li>`;
     return;
   }
 
   await refreshWalletMap();
 
-  list.innerHTML = tips
-    .map(
-      (i) => `
-          <li class="tip-item" data-id="${i._id}">
-            <div class="tip-group-customer-date-note">
-              ${
-                i.customer
-                  ? `<span class="tip-customer">${escapeHtml(
-                      i.customer
-                    )}</span>`
-                  : ""
-              }
-              <div class="tip-group-date-note">
-              <span class="tip-date muted">${formatDateDisplayTip(
-                i.date
-              )}</span>              
-              ${
-                i.note
-                  ? `<span class="muted">&nbsp;- ${escapeHtml(i.note)}</span>`
-                  : ""
-              }
+  const grouped = groupBy(tips, (t) => (t.date || "").slice(0, 10));
+  list.innerHTML = Object.entries(grouped)
+    .map(([day, items]) => {
+      const allChecked = items.every((t) => t.received);
+      return `
+        <li class="tip-day" data-day="${day}">
+          <div class="tip-day-header">
+            <input type="checkbox" class="day-checkbox" ${
+              allChecked ? "checked" : ""
+            } data-day="${day}" />
+            <span class="day-label">${day}</span>
+          </div>
+          <ul class="tip-day-list">
+            ${items
+              .map(
+                (i) => `
+              <li class="tip-item" data-id="${i._id}">
+                <span class="tip-group-checkbox-customer-note">
+                    <input type="checkbox" class="tip-checkbox" data-id="${
+                      i._id
+                    }" ${i.received ? "checked" : ""}/>
+                      <span class="tip-group-customer-note">
+                        ${
+                          i.customer
+                            ? `<span class="tip-customer">${escapeHtml(
+                                i.customer
+                              )}</span>`
+                            : ""
+                        }
+                        ${
+                          i.note
+                            ? `<span class="muted">&nbsp;${escapeHtml(
+                                i.note
+                              )}</span>`
+                            : ""
+                        }
+                      </span>
+                  </span>
+                  <span class="tip-group-action-amount">
+                    <div class="item-actions">
+                      <div class="item-action-buttons">
+                        <button class="btn ghost icon" data-action="edit">✏️</button>
+                        <button class="btn ghost icon" data-action="delete">🗑️</button>
+                      </div>
+                    </div>
+                    <div class="group-amount-wallet">
+                      <span class="tip-amount">+${formatCurrency(
+                        i.amount
+                      )}</span>
+                      <span class="wallet">[Ví: ${
+                        walletMap[String(i.walletId ?? "")] || "—"
+                      }]</span>
+                    </div>
+                  </span>
+                </span>
 
-              </div>
-            </div>
-            <div class="expense-group-action-amount">
-              <div class="item-actions">
-                <div class="item-action-buttons">
-                  <button class="btn ghost icon" type="button" data-action="edit" aria-label="Chỉnh sửa khoản chi">
-                  ✏️
-                  </button>
-                  <button class="btn ghost icon" type="button" data-action="delete" aria-label="Xoá khoản chi">
-                  🗑️
-                  </button>
-                </div>
-                <div class="group-amount-wallet">
-                  <span class="tip-amount">+${formatCurrency(i.amount)}</span>
-                  <span class="wallet">(Ví: ${escapeHtml(
-                    walletMap[String(i.walletId ?? "")] || "—"
-                  )})</span>
-                </div>
-              </div>
-            </div>
-          </li>
-          `
-    )
+              </li>`
+              )
+              .join("")}
+          </ul>
+        </li>
+      `;
+    })
     .join("");
 }
 
@@ -222,26 +246,6 @@ export function initTip({ onChanged } = {}) {
       return;
     }
 
-    // if (action === "delete") {
-    //   const data = currentTips.find((t) => t._id === id);
-    //   const name = data?.customer ? `của ${data.customer}` : "này";
-    //   if (!confirm(`Xoá tip ${name}?`)) return;
-    //   const ok = await showConfirm(`Xoá tip ${name}?`, {
-    //     confirmText: "Xoá",
-    //     variant: "danger",
-    //   });
-    //   if (!ok) return;
-    //   try {
-    //     await deleteTip(id);
-    //     await renderTips();
-    //     if (typeof onChanged === "function") onChanged();
-    //     showToast("Đã xoá tip.", "success");
-    //   } catch (err) {
-    //     // alert(err?.message || "Xoá tip thất bại.");
-    //     showToast(err?.message || "Xoá tip thất bại.", "error");
-    //   }
-    // }
-
     if (action === "delete") {
       const data = currentTips.find((t) => t._id === id);
       const name = data?.customer ? `của ${data.customer}` : "này";
@@ -268,6 +272,33 @@ export function initTip({ onChanged } = {}) {
       } catch (err) {
         Swal.fire("Lỗi!", err?.message || "Xoá tip thất bại.", "error");
       }
+    }
+  });
+
+  list?.addEventListener("change", async (e) => {
+    // tip checkbox
+    if (e.target.classList.contains("tip-checkbox")) {
+      const id = e.target.dataset.id;
+      const state = e.target.checked;
+      await updateTipReceived(id, state);
+      await renderTips();
+      window.dispatchEvent(new CustomEvent("wallets:refresh"));
+      window.dispatchEvent(new CustomEvent("kpi:refresh"));
+      return;
+    }
+    // day checkbox
+    if (e.target.classList.contains("day-checkbox")) {
+      const day = e.target.dataset.day;
+      const tipsOfDay = currentTips.filter((t) =>
+        (t.date || "").startsWith(day)
+      );
+      for (const t of tipsOfDay) {
+        await updateTipReceived(t._id, e.target.checked);
+      }
+      await renderTips();
+      window.dispatchEvent(new CustomEvent("wallets:refresh"));
+      window.dispatchEvent(new CustomEvent("kpi:refresh"));
+      return;
     }
   });
 

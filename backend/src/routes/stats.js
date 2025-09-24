@@ -13,7 +13,11 @@ r.get("/kpi", async (_req, res) => {
   const [incAgg, expAgg, tipAgg, wallets] = await Promise.all([
     Income.aggregate([{ $group: { _id: null, total: sumExpr } }]),
     Expense.aggregate([{ $group: { _id: null, total: sumExpr } }]),
-    Tip.aggregate([{ $group: { _id: null, total: sumExpr } }]),
+    // Tip.aggregate([{ $group: { _id: null, total: sumExpr } }]),
+    Tip.aggregate([
+      { $match: { received: true } },
+      { $group: { _id: null, total: sumExpr } },
+    ]),
     Wallet.find({ archived: false }, { balance: 1 }).lean(), // chỉ để so sánh
   ]);
 

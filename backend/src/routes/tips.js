@@ -22,7 +22,7 @@ async function computeWalletBalanceById(wid, session) {
       { $group: { _id: null, total: sumExpr } },
     ]).session(session),
     Tip.aggregate([
-      { $match: { walletId: oid } },
+      { $match: { walletId: oid, received: true } },
       { $group: { _id: null, total: sumExpr } },
     ]).session(session),
   ]);
@@ -50,39 +50,53 @@ r.get("/", async (req, res, next) => {
 });
 
 r.put("/:id", async (req, res, next) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
+    const before = await Tip.findById(req.params.id).session(session);
+    if (!before) {
+      await session.abortTransaction();
+      return res.status(404).json({ message: "Not found" });
+    }
     const updated = await Tip.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
+      session,
     });
-    if (!updated) return res.status(404).json({ message: "Not found" });
+    const affected = [
+      String(before.walletId || ""),
+      String(updated.walletId || ""),
+    ].filter(Boolean);
+    const unique = [...new Set(affected)];
+    for (const wid of unique) {
+      const bal = await computeWalletBalanceById(wid, session);
+      await Wallet.findByIdAndUpdate(wid, { balance: bal }, { session });
+    }
+    await session.commitTransaction();
     res.json(updated);
   } catch (e) {
+    await session.abortTransaction();
     next(e);
+  } finally {
+    session.endSession();
   }
 });
-
-// r.delete("/:id", async (req, res, next) => {
-//   try {
-//     const deleted = await Tip.findByIdAndDelete(req.params.id);
-//     if (!deleted) return res.status(404).json({ message: "Not found" });
-//     res.json({ ok: true });
-//   } catch (e) {
-//     next(e);
-//   }
-// });
 
 r.post("/", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const [tip] = await Tip.create([req.body], { session });
+    // const [tip] = await Tip.create([req.body], { session });
 
-    if (req.body.walletId) {
-      const w = await Wallet.findById(req.body.walletId).session(session);
-      if (!w) throw new Error("Wallet not found");
-      w.balance += Number(req.body.amount || 0); // giống Income
-      await w.save({ session });
-    }
+    // if (req.body.walletId) {
+    //   const w = await Wallet.findById(req.body.walletId).session(session);
+    //   if (!w) throw new Error("Wallet not found");
+    //   w.balance += Number(req.body.amount || 0); // giống Income
+    //   await w.save({ session });
+    // }
+
+    const [tip] = await Tip.create([{ ...req.body, received: false }], {
+      session,
+    });
 
     await session.commitTransaction();
     res.status(201).json(tip);
@@ -93,58 +107,6 @@ r.post("/", async (req, res) => {
     session.endSession();
   }
 });
-
-// r.patch("/:id", async (req, res) => {
-//   const session = await mongoose.startSession();
-//   session.startTransaction();
-//   try {
-//     const old = await Tip.findById(req.params.id).session(session);
-//     if (!old) throw new Error("Tip not found");
-
-//     const updated = await Tip.findByIdAndUpdate(req.params.id, req.body, {
-//       new: true,
-//       session,
-//     });
-
-//     const oldAmount = Number(old.amount || 0);
-//     const newAmount = Number(updated.amount || 0);
-//     const delta = newAmount - oldAmount;
-
-//     const oldWid = String(old.walletId || "");
-//     const newWid = String(updated.walletId || "");
-
-//     if (oldWid && newWid && oldWid === newWid) {
-//       const w = await Wallet.findById(newWid).session(session);
-//       if (w) {
-//         w.balance += delta;
-//         await w.save({ session });
-//       }
-//     } else {
-//       if (oldWid) {
-//         const wOld = await Wallet.findById(oldWid).session(session);
-//         if (wOld) {
-//           wOld.balance -= oldAmount;
-//           await wOld.save({ session });
-//         }
-//       }
-//       if (newWid) {
-//         const wNew = await Wallet.findById(newWid).session(session);
-//         if (wNew) {
-//           wNew.balance += newAmount;
-//           await wNew.save({ session });
-//         }
-//       }
-//     }
-
-//     await session.commitTransaction();
-//     res.json(updated);
-//   } catch (e) {
-//     await session.abortTransaction();
-//     res.status(400).json({ message: e.message });
-//   } finally {
-//     session.endSession();
-//   }
-// });
 
 r.patch("/:id", async (req, res) => {
   const session = await mongoose.startSession();
@@ -186,6 +148,38 @@ r.patch("/:id", async (req, res) => {
   }
 });
 
+r.patch("/:id/received", async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const tip = await Tip.findById(req.params.id).session(session);
+    if (!tip) {
+      await session.abortTransaction();
+      return res.status(404).json({ message: "Tip not found" });
+    }
+
+    tip.received = req.body.received;
+    await tip.save({ session });
+
+    if (tip.walletId) {
+      const bal = await computeWalletBalanceById(tip.walletId, session);
+      await Wallet.findByIdAndUpdate(
+        tip.walletId,
+        { balance: bal },
+        { session }
+      );
+    }
+
+    await session.commitTransaction();
+    res.json(tip);
+  } catch (e) {
+    await session.abortTransaction();
+    res.status(400).json({ message: e.message });
+  } finally {
+    session.endSession();
+  }
+});
+
 r.delete("/:id", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -195,12 +189,21 @@ r.delete("/:id", async (req, res) => {
 
     await Tip.findByIdAndDelete(req.params.id, { session });
 
+    // if (old.walletId) {
+    //   const w = await Wallet.findById(old.walletId).session(session);
+    //   if (w) {
+    //     w.balance -= Number(old.amount || 0);
+    //     await w.save({ session });
+    //   }
+    // }
+
     if (old.walletId) {
-      const w = await Wallet.findById(old.walletId).session(session);
-      if (w) {
-        w.balance -= Number(old.amount || 0);
-        await w.save({ session });
-      }
+      const bal = await computeWalletBalanceById(old.walletId, session);
+      await Wallet.findByIdAndUpdate(
+        old.walletId,
+        { balance: bal },
+        { session }
+      );
     }
 
     await session.commitTransaction();

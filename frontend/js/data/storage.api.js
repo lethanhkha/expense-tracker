@@ -51,3 +51,6 @@ export const transferWallet = (data) => http.post("/wallets/transfer", data);
 /** ===== Stats ===== */
 // export const getKPI = () => http.get("/stats/kpi");
 export const getKPI = () => http.get(`/stats/kpi?_=${Date.now()}`);
+
+export const updateTipReceived = (id, state) =>
+  http.patch(`/tips/${id}/received`, { received: state });
