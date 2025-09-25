@@ -100,16 +100,39 @@
 }
 
 /* Giới hạn chiều cao form trong modal và cho phép scroll */
-.modal .dialog .inner {
-  max-height: 85vh; /* cao tối đa 85% màn hình */
-  overflow-y: auto; /* cuộn dọc nếu vượt quá */
+/* .modal .dialog .inner {
+  max-height: 85vh; 
+  overflow-y: auto; 
+} */
+
+.modal .dialog {
+  width: min(640px, 92vw);
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 18px 80px rgba(15, 18, 40, 0.25);
+  display: flex; /* để .inner giãn full */
+  /* overflow-y: auto; */
 }
 
 /* Nếu muốn áp dụng riêng cho form: */
-.modal .form {
+/* .modal .form {
   max-height: 75vh;
   overflow-y: auto;
+  padding-right: 6px; 
+} */
+
+.modal .form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1; /* chiếm phần còn lại giữa header & footer */
+  min-height: 0; /* quan trọng để overflow hoạt động trong flex */
+  overflow: auto; /* nội dung form cuộn ở đây */
   padding-right: 6px; /* chừa chỗ scrollbar */
+}
+
+.modal .header {
+  position: sticky;
 }
 
 .dialog {
@@ -119,8 +142,26 @@
   box-shadow: 0 18px 80px rgba(15, 18, 40, 0.25);
 }
 
-.dialog .inner {
+/* .dialog .inner {
   padding: 22px;
+} */
+
+.dialog .inner {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%; /* chiếm hết 86vh */
+  padding: 22px;
+  overflow: hidden;
+}
+
+.modal .form .actions {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  border-top: 1px solid #ececf3;
+  padding-top: 8px;
+  margin-top: auto; /* đẩy footer xuống đáy vùng cuộn */
 }
 
 .form {
@@ -146,12 +187,6 @@
   justify-content: flex-end;
   gap: 12px;
   margin-top: 8px;
-}
-.cat-footer {
-  display: flex;
-  justify-content: space-between; /* Đóng bên trái, Thêm bên phải */
-  align-items: center;
-  gap: 10px;
 }
 
 .profile {
