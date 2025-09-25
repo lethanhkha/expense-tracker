@@ -4,15 +4,19 @@ import { initExpense } from "../js/modules/expense.js";
 import { initTip } from "../js/modules/tip.js";
 import { getKPI } from "./data/storage.api.js";
 import { initCategories } from "../js/modules/categories.js";
+import { initDebtsPage } from "../js/modules/debt.js";
 
 // Tabs
 const navButtons = document.querySelectorAll(".tab-btn");
 const pages = document.querySelectorAll(".tab-page");
 
 function showTab(tabName) {
+  if (!tabName) return; // guard 1
+  const pageEl = document.getElementById(tabName);
+  if (!pageEl) return;
   pages.forEach((p) => p.classList.add("hidden"));
   navButtons.forEach((b) => b.classList.remove("active"));
-  document.getElementById(tabName).classList.remove("hidden");
+  pageEl.classList.remove("hidden");
   document
     .querySelector(`.tab-btn[data-tab="${tabName}"]`)
     ?.classList.add("active");
@@ -51,6 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const tip = initTip({ onChanged: updateKPIs });
   const cats = initCategories();
 
+  initDebtsPage();
   income.renderIncomes?.(); // hàm async – không cần await
   expense.renderExpenses?.();
   tip.renderTips?.();

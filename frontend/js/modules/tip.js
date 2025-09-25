@@ -13,6 +13,7 @@ import {
   ensureDefaultDate,
   escapeHtml,
   setupQuickAmountButtons,
+  formatDateDisplayTip,
 } from "../modules/formatAndQuickbuttons.js";
 
 import { showToast } from "../modules/toast.js";
@@ -62,7 +63,7 @@ async function renderTips() {
             <input type="checkbox" class="day-checkbox" ${
               allChecked ? "checked" : ""
             } data-day="${day}" />
-            <span class="day-label">${day}</span>
+            <span class="day-label">${formatDateDisplayTip(day)}</span>
           </div>
           <ul class="tip-day-list">
             ${items

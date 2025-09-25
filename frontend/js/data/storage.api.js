@@ -57,6 +57,7 @@ export const updateTipReceived = (id, state) =>
 
 // ==== Debts ====
 export const getDebts = (q) => http.get("/debts", { params: q });
+export const getDebt = (id) => http.get(`/debts/${id}`);
 export const createDebt = (payload) => http.post("/debts", payload);
 export const updateDebt = (id, payload) => http.patch(`/debts/${id}`, payload);
 export const deleteDebt = (id) => http.delete(`/debts/${id}`);
