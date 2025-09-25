@@ -35,6 +35,7 @@
           <button class="tab-btn" data-tab="expense">Khoản chi</button>
           <button class="tab-btn" data-tab="tip">Tiền tip</button>
           <button class="tab-btn" data-tab="debts">Debts</button>
+          <button class="tab-btn" data-tab="goals">Mục tiêu</button>
         </nav>
       </aside>
       <main class="content">
@@ -124,25 +125,6 @@
             </div>
           </div>
 
-          <!-- <div class="card">
-            <div class="inner">
-              <div
-                class="actions"
-                style="justify-content: space-between; margin-bottom: 8px"
-              >
-                <h3>Danh sách nợ</h3>
-                <button class="btn primary" id="btn-add-debt">+ Thêm nợ</button>
-              </div>
-              <ul id="debt-list" class="col" style="gap: 8px"></ul>
-              <p
-                class="muted"
-                id="debt-empty"
-                style="display: none; margin-top: 8px"
-              >
-                Chưa có khoản nợ nào.
-              </p>
-            </div>
-          </div>-->
           <div class="card">
             <div class="inner">
               <div class="header">
@@ -158,6 +140,23 @@
                 style="display: none; margin-top: 8px"
               >
                 Chưa có khoản nợ nào.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="goals" class="tab-page hidden">
+          <div class="card">
+            <div class="inner">
+              <div class="header">
+                <div class="title">Mục tiêu</div>
+                <button class="btn primary btn-add" id="btn-add-goal">
+                  + Mục tiêu
+                </button>
+              </div>
+              <ul id="goal-list"></ul>
+              <p class="muted" id="goal-empty" style="display: none">
+                Chưa có mục tiêu.
               </p>
             </div>
           </div>
@@ -478,7 +477,10 @@
         <div class="modal" id="modal-debt">
           <div class="dialog">
             <div class="inner">
-              <h3 id="debt-modal-title">Thêm khoản nợ</h3>
+              <div class="header">
+                <div class="title" id="debt-modal-title">Thêm khoản nợ</div>
+                <button class="btn ghost" data-close>✕</button>
+              </div>
               <form id="debt-form" class="form">
                 <div class="field">
                   <label>Mô tả</label>
@@ -489,33 +491,151 @@
                     required
                   />
                 </div>
-                <div class="field grid-2">
-                  <div>
-                    <label>Số tiền</label>
-                    <input
-                      name="amount"
-                      type="number"
-                      min="0"
-                      step="1000"
-                      class="input"
-                      placeholder="0"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label>Hạn trả (tuỳ chọn)</label>
-                    <input name="dueDate" type="date" class="input" />
-                  </div>
+                <div class="field">
+                  <label>Số tiền</label>
+                  <input
+                    name="amount"
+                    type="number"
+                    min="0"
+                    step="1000"
+                    class="input"
+                    placeholder="0"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label>Hạn trả (tuỳ chọn)</label>
+                  <input name="dueDate" type="date" class="input" />
                 </div>
                 <div class="actions">
-                  <button
-                    type="button"
-                    class="btn ghost"
-                    data-close="#modal-debt"
-                  >
+                  <button type="button" class="btn ghost" data-close>
                     Huỷ
                   </button>
                   <button type="submit" class="btn primary">Lưu</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div class="modal" id="modal-goal">
+          <div class="dialog">
+            <div class="inner">
+              <div class="header">
+                <div class="title" id="goal-modal-title">Thêm mục tiêu</div>
+                <button class="btn ghost" data-close>✕</button>
+              </div>
+              <form id="goal-form" class="form">
+                <div class="field">
+                  <label>Tên mục tiêu</label>
+                  <input name="name" class="input" required />
+                </div>
+                <div class="field">
+                  <label>Số tiền mục tiêu</label>
+                  <input
+                    name="targetAmount"
+                    type="number"
+                    min="0"
+                    step="1000"
+                    class="input"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label>Ghi chú </label>
+                  <textarea name="note" class="input" rows="2"></textarea>
+                </div>
+
+                <div class="actions">
+                  <button type="button" class="btn ghost btn-cancel">
+                    Đóng
+                  </button>
+                  <button type="submit" class="btn primary">Lưu</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal" id="modal-goal-contrib">
+          <div class="dialog">
+            <div class="inner">
+              <div class="header">
+                <div class="title" id="goal-contrib-modal-title">
+                  Thêm khoản góp
+                </div>
+                <button class="btn ghost" data-close>✕</button>
+              </div>
+              <form id="goal-contrib-form" class="form">
+                <div class="field">
+                  <label>Số tiền</label>
+                  <input
+                    name="amount"
+                    type="number"
+                    min="0"
+                    step="1000"
+                    class="input"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label>Ví</label>
+                  <select name="walletId" class="input" required></select>
+                </div>
+                <div class="field">
+                  <label>Ngày</label>
+                  <input name="date" type="date" class="input" />
+                </div>
+                <div class="field">
+                  <label>Ghi chú </label>
+                  <textarea name="note" class="input" rows="2"></textarea>
+                </div>
+
+                <div class="actions">
+                  <button type="button" class="btn ghost btn-cancel">
+                    Đóng
+                  </button>
+                  <button type="submit" class="btn primary">Góp</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div class="modal" id="modal-goal-withdraw">
+          <div class="dialog">
+            <div class="inner">
+              <div class="header">
+                <div class="title" id="goal-withdraw-modal-title">Rút tiền</div>
+                <button class="btn ghost" data-close>✕</button>
+              </div>
+              <form id="goal-withdraw-form" class="form">
+                <div class="field">
+                  <label> Số tiền </label>
+                  <input
+                    name="amount"
+                    type="number"
+                    min="0"
+                    step="1000"
+                    class="input"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label> Ví </label>
+                  <select name="walletId" class="input" required></select>
+                </div>
+                <div class="field">
+                  <label> Ngày </label>
+                  <input name="date" type="date" class="input" />
+                </div>
+                <div class="field">
+                  <label> Ghi chú </label>
+                  <textarea name="note" class="input" rows="2"></textarea>
+                </div>
+                <div class="actions">
+                  <button type="button" class="btn ghost btn-cancel">
+                    Đóng
+                  </button>
+                  <button type="submit" class="btn primary">Rút</button>
                 </div>
               </form>
             </div>
@@ -551,6 +671,13 @@
         </button>
         <button class="tab-btn icon-only" data-tab="debts" aria-label="Nợ">
           <span class="nav-icon">💳</span>
+        </button>
+        <button
+          class="tab-btn icon-only"
+          data-tab="goals"
+          aria-label="Mục tiêu"
+        >
+          <span class="nav-icon">🎯</span>
         </button>
       </nav>
     </div>

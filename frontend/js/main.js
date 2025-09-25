@@ -5,6 +5,7 @@ import { initTip } from "../js/modules/tip.js";
 import { getKPI } from "./data/storage.api.js";
 import { initCategories } from "../js/modules/categories.js";
 import { initDebtsPage } from "../js/modules/debt.js";
+import { initGoals } from "../js/modules/goal.js";
 
 // Tabs
 const navButtons = document.querySelectorAll(".tab-btn");
@@ -56,6 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const cats = initCategories();
 
   initDebtsPage();
+  initGoals();
   income.renderIncomes?.(); // hàm async – không cần await
   expense.renderExpenses?.();
   tip.renderTips?.();
