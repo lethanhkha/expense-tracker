@@ -93,6 +93,7 @@
   display: none;
   place-items: center;
   padding: 18px;
+  z-index: 1000;
 }
 
 .modal.show {
@@ -111,6 +112,7 @@
   border-radius: 20px;
   box-shadow: 0 18px 80px rgba(15, 18, 40, 0.25);
   display: flex; /* để .inner giãn full */
+  height: 76vh;
   /* overflow-y: auto; */
 }
 
@@ -133,6 +135,12 @@
 
 .modal .header {
   position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fff;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #ececf3;
 }
 
 .dialog {
