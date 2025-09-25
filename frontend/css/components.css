@@ -256,7 +256,8 @@
 .income-item:hover .btn.icon,
 .expense-item:hover .btn.icon,
 .tip-item:hover .btn.icon,
-.cat-item:hover .btn.icon {
+.cat-item:hover .btn.icon,
+.debt-item:hover .btn.icon {
   visibility: visible;
   transform: translateY(0);
 }
@@ -266,4 +267,24 @@
     transition: none !important;
     animation: none !important;
   }
+}
+
+.is-done {
+  text-decoration: line-through;
+  opacity: 0.65;
+}
+.debt-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: var(--shadow-card);
+}
+.debt-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
