@@ -34,6 +34,7 @@
           <button class="tab-btn" data-tab="income">Khoản thu</button>
           <button class="tab-btn" data-tab="expense">Khoản chi</button>
           <button class="tab-btn" data-tab="tip">Tiền tip</button>
+          <button class="tab-btn" data-tab="debts">Debts</button>
         </nav>
       </aside>
       <main class="content">
@@ -69,6 +70,7 @@
             </div>
           </div>
         </section>
+
         <section id="income" class="tab-page hidden">
           <div class="card">
             <div class="inner">
@@ -82,6 +84,68 @@
             </div>
           </div>
         </section>
+
+        <section id="expense" class="tab-page hidden">
+          <div class="card">
+            <div class="inner">
+              <div class="header">
+                <div class="title">Danh sách khoản chi</div>
+                <button class="btn primary btn-add" id="btn-add-expense">
+                  + Thêm khoản chi
+                </button>
+              </div>
+              <ul id="expense-list"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section id="tip" class="tab-page hidden">
+          <div class="card">
+            <div class="inner">
+              <div class="header">
+                <div class="title">Danh sách tiền tip</div>
+                <button class="btn primary btn-add" id="btn-add-tip">
+                  + Thêm tip
+                </button>
+              </div>
+              <ul id="tip-list"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section id="debts" class="tab-page hidden">
+          <div class="kpis" style="margin-bottom: 12px">
+            <div class="kpi card">
+              <div class="icon">💳</div>
+              <div>
+                <div class="value" id="debt-open-amount">0</div>
+                <div class="label">Tổng nợ chưa trả</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="inner">
+              <div
+                class="actions"
+                style="justify-content: space-between; margin-bottom: 8px"
+              >
+                <h3>Danh sách nợ</h3>
+                <button class="btn primary" id="btn-add-debt">+ Thêm nợ</button>
+              </div>
+              <ul id="debt-list" class="col" style="gap: 8px"></ul>
+              <p
+                class="muted"
+                id="debt-empty"
+                style="display: none; margin-top: 8px"
+              >
+                Chưa có khoản nợ nào.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Modal Income -->
         <div class="modal" id="modal-income">
           <div class="dialog">
             <div class="inner">
@@ -143,21 +207,6 @@
             </div>
           </div>
         </div>
-
-        <section id="expense" class="tab-page hidden">
-          <div class="card">
-            <div class="inner">
-              <div class="header">
-                <div class="title">Danh sách khoản chi</div>
-                <button class="btn primary btn-add" id="btn-add-expense">
-                  + Thêm khoản chi
-                </button>
-              </div>
-              <ul id="expense-list"></ul>
-            </div>
-          </div>
-        </section>
-
         <!-- Modal Expense -->
         <div class="modal" id="modal-expense">
           <div class="dialog">
@@ -222,20 +271,6 @@
             </div>
           </div>
         </div>
-        <section id="tip" class="tab-page hidden">
-          <div class="card">
-            <div class="inner">
-              <div class="header">
-                <div class="title">Danh sách tiền tip</div>
-                <button class="btn primary btn-add" id="btn-add-tip">
-                  + Thêm tip
-                </button>
-              </div>
-              <ul id="tip-list"></ul>
-            </div>
-          </div>
-        </section>
-
         <!-- Modal Tip -->
         <div class="modal" id="modal-tip">
           <div class="dialog">
@@ -293,123 +328,182 @@
             </div>
           </div>
         </div>
-      </main>
-      <!-- Modal Categories -->
-      <div class="modal" id="modal-categories" data-mode="list">
-        <div class="dialog">
-          <div class="inner">
-            <div class="header">
-              <div class="title">Danh mục cố định</div>
-              <button class="btn ghost" data-close>✕</button>
-            </div>
+        <!-- Modal Categories -->
+        <div class="modal" id="modal-categories" data-mode="list">
+          <div class="dialog">
+            <div class="inner">
+              <div class="header">
+                <div class="title">Danh mục cố định</div>
+                <button class="btn ghost" data-close>✕</button>
+              </div>
 
-            <!-- Tabs -->
-            <div class="cat-tabs" role="tablist">
-              <button class="modal-tab active" data-tab="cat-income">
-                Thu nhập
-              </button>
-              <button class="modal-tab" data-tab="cat-expense">Chi tiêu</button>
-              <button class="modal-tab" data-tab="cat-wallets">Ví</button>
-            </div>
-
-            <!-- Pages -->
-            <div class="cat-pages">
-              <div id="cat-income" class="cat-page">
-                <ul id="cat-income-list" class="cat-list"></ul>
-              </div>
-              <div id="cat-expense" class="cat-page hidden">
-                <ul id="cat-expense-list" class="cat-list"></ul>
-              </div>
-              <div id="cat-wallets" class="cat-page hidden">
-                <ul id="wallets-list" class="cat-list"></ul>
-                <button id="open-transfer" class="btn">Chuyển tiền</button>
-              </div>
-            </div>
-
-            <!-- Footer  -->
-            <div class="cat-footer">
-              <div class="">
-                <button class="btn primary" id="btn-cat-add">+ Danh mục</button>
-                <button class="btn primary" id="btn-wallet-add">+ Ví</button>
-              </div>
-              <button type="button" class="btn ghost" data-close>Đóng</button>
-            </div>
-
-            <form class="form cat-form cat-form--preset" id="cat-form">
-              <div class="field">
-                <label>Loại</label>
-                <select class="input" id="cat-type">
-                  <option value="income">Thu nhập</option>
-                  <option value="expense">Chi tiêu</option>
-                </select>
-              </div>
-              <div class="field">
-                <label>Tên danh mục</label>
-                <input
-                  class="input"
-                  id="cat-source"
-                  placeholder="VD: Lương, Tiền nhà..."
-                  required
-                />
-              </div>
-              <div class="field">
-                <label>Số tiền mặc định (tùy chọn)</label>
-                <input
-                  class="input"
-                  id="cat-amount"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-              <div class="field">
-                <label>Ghi chú (tùy chọn)</label>
-                <input class="input" id="cat-note" />
-              </div>
-              <div class="actions">
-                <button type="button" class="btn ghost" id="btn-cat-back">
-                  Quay lại danh mục
+              <!-- Tabs -->
+              <div class="cat-tabs" role="tablist">
+                <button class="modal-tab active" data-tab="cat-income">
+                  Thu nhập
                 </button>
-                <button type="button" class="btn ghost" data-close>Đóng</button>
-                <button class="btn primary" type="submit">Lưu danh mục</button>
-              </div>
-            </form>
-
-            <!-- Form thêm/sửa ví nhanh -->
-            <form class="form cat-form cat-form--wallet" id="wallet-form">
-              <div class="field">
-                <label>Tên ví</label>
-                <input
-                  class="input"
-                  id="wallet-name"
-                  placeholder="Tiền mặt, VCB, MoMo..."
-                  required
-                />
-              </div>
-              <div class="field">
-                <label>Loại</label>
-                <select class="input" id="wallet-type">
-                  <option value="cash">Tiền mặt</option>
-                  <option value="bank">Ngân hàng</option>
-                  <option value="ewallet">Ví điện tử</option>
-                  <option value="other">Khác</option>
-                </select>
-              </div>
-              <div class="field">
-                <label>Tiền tệ</label>
-                <input class="input" id="wallet-currency" value="VND" />
-              </div>
-              <div class="actions">
-                <button type="button" class="btn ghost" id="btn-wallet-back">
-                  Quay lại ví
+                <button class="modal-tab" data-tab="cat-expense">
+                  Chi tiêu
                 </button>
-                <button type="button" class="btn ghost" data-close>Đóng</button>
-                <button class="btn primary" type="submit">Thêm/ Lưu ví</button>
+                <button class="modal-tab" data-tab="cat-wallets">Ví</button>
               </div>
-            </form>
+
+              <!-- Pages -->
+              <div class="cat-pages">
+                <div id="cat-income" class="cat-page">
+                  <ul id="cat-income-list" class="cat-list"></ul>
+                </div>
+                <div id="cat-expense" class="cat-page hidden">
+                  <ul id="cat-expense-list" class="cat-list"></ul>
+                </div>
+                <div id="cat-wallets" class="cat-page hidden">
+                  <ul id="wallets-list" class="cat-list"></ul>
+                  <button id="open-transfer" class="btn">Chuyển tiền</button>
+                </div>
+              </div>
+
+              <!-- Footer  -->
+              <div class="cat-footer">
+                <div class="">
+                  <button class="btn primary" id="btn-cat-add">
+                    + Danh mục
+                  </button>
+                  <button class="btn primary" id="btn-wallet-add">+ Ví</button>
+                </div>
+                <button type="button" class="btn ghost" data-close>Đóng</button>
+              </div>
+
+              <form class="form cat-form cat-form--preset" id="cat-form">
+                <div class="field">
+                  <label>Loại</label>
+                  <select class="input" id="cat-type">
+                    <option value="income">Thu nhập</option>
+                    <option value="expense">Chi tiêu</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Tên danh mục</label>
+                  <input
+                    class="input"
+                    id="cat-source"
+                    placeholder="VD: Lương, Tiền nhà..."
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label>Số tiền mặc định (tùy chọn)</label>
+                  <input
+                    class="input"
+                    id="cat-amount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <div class="field">
+                  <label>Ghi chú (tùy chọn)</label>
+                  <input class="input" id="cat-note" />
+                </div>
+                <div class="actions">
+                  <button type="button" class="btn ghost" id="btn-cat-back">
+                    Quay lại danh mục
+                  </button>
+                  <button type="button" class="btn ghost" data-close>
+                    Đóng
+                  </button>
+                  <button class="btn primary" type="submit">
+                    Lưu danh mục
+                  </button>
+                </div>
+              </form>
+
+              <!-- Form thêm/sửa ví nhanh -->
+              <form class="form cat-form cat-form--wallet" id="wallet-form">
+                <div class="field">
+                  <label>Tên ví</label>
+                  <input
+                    class="input"
+                    id="wallet-name"
+                    placeholder="Tiền mặt, VCB, MoMo..."
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label>Loại</label>
+                  <select class="input" id="wallet-type">
+                    <option value="cash">Tiền mặt</option>
+                    <option value="bank">Ngân hàng</option>
+                    <option value="ewallet">Ví điện tử</option>
+                    <option value="other">Khác</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Tiền tệ</label>
+                  <input class="input" id="wallet-currency" value="VND" />
+                </div>
+                <div class="actions">
+                  <button type="button" class="btn ghost" id="btn-wallet-back">
+                    Quay lại ví
+                  </button>
+                  <button type="button" class="btn ghost" data-close>
+                    Đóng
+                  </button>
+                  <button class="btn primary" type="submit">
+                    Thêm/ Lưu ví
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
-      </div>
+        <!-- Modal thêm/sửa Debt (dùng modal.css hiện tại) -->
+        <div class="modal" id="modal-debt">
+          <div class="dialog">
+            <div class="inner">
+              <h3 id="debt-modal-title">Thêm khoản nợ</h3>
+              <form id="debt-form" class="form">
+                <div class="field">
+                  <label>Mô tả</label>
+                  <input
+                    name="title"
+                    class="input"
+                    placeholder="VD: Nợ anh A"
+                    required
+                  />
+                </div>
+                <div class="field grid-2">
+                  <div>
+                    <label>Số tiền</label>
+                    <input
+                      name="amount"
+                      type="number"
+                      min="0"
+                      step="1000"
+                      class="input"
+                      placeholder="0"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label>Hạn trả (tuỳ chọn)</label>
+                    <input name="dueDate" type="date" class="input" />
+                  </div>
+                </div>
+                <div class="actions">
+                  <button
+                    type="button"
+                    class="btn ghost"
+                    data-close="#modal-debt"
+                  >
+                    Huỷ
+                  </button>
+                  <button type="submit" class="btn primary">Lưu</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </main>
 
       <!-- Bottom Nav (mobile) -->
       <nav class="bottom-nav" role="tablist" aria-label="Điều hướng">
