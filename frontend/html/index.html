@@ -124,7 +124,7 @@
             </div>
           </div>
 
-          <div class="card">
+          <!-- <div class="card">
             <div class="inner">
               <div
                 class="actions"
@@ -134,6 +134,24 @@
                 <button class="btn primary" id="btn-add-debt">+ Thêm nợ</button>
               </div>
               <ul id="debt-list" class="col" style="gap: 8px"></ul>
+              <p
+                class="muted"
+                id="debt-empty"
+                style="display: none; margin-top: 8px"
+              >
+                Chưa có khoản nợ nào.
+              </p>
+            </div>
+          </div>-->
+          <div class="card">
+            <div class="inner">
+              <div class="header">
+                <div class="title">Danh sách nợ</div>
+                <button class="btn primary btn-add" id="btn-add-debt">
+                  + Thêm nợ
+                </button>
+              </div>
+              <ul id="debt-list"></ul>
               <p
                 class="muted"
                 id="debt-empty"
