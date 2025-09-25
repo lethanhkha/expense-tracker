@@ -11,6 +11,7 @@ import stats from "./routes/stats.js";
 import presets from "./routes/presets.js";
 import wallets from "./routes/wallets.js";
 import debts from "./routes/debts.js";
+import goals from "./routes/goals.js";
 
 const envFile = process.env.NODE_ENV === "production" ? ".env" : ".env.dev";
 dotenv.config({ path: envFile });
@@ -46,6 +47,7 @@ app.use("/api/stats", stats);
 app.use("/api/presets", presets);
 app.use("/api/wallets", wallets);
 app.use("/api/debts", debts);
+app.use("/api/goals", goals);
 
 // 404 fallback
 app.use((req, res) => {

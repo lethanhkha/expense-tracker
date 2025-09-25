@@ -25,10 +25,12 @@ function fmtMoney(v) {
 }
 function openModal() {
   els.modal.classList.add("show");
+  document.body.style.overflow = "hidden";
   attachQuickButtons();
 }
 function closeModal() {
   els.modal.classList.remove("show");
+  document.body.style.overflow = "";
   els.form.reset();
   editingId = null;
   els.title.textContent = "Thêm khoản nợ";
@@ -202,8 +204,17 @@ function bindEvents() {
   // close modal
   els.modal?.addEventListener("click", (e) => {
     if (e.target === els.modal) closeModal();
-    const btnClose = e.target.closest("[data-close='#modal-debt']");
-    if (btnClose) closeModal();
+    const btnClose = e.target.closest("[data-close]");
+    if (btnClose) {
+      closeModal();
+    }
+  });
+
+  // Đóng bằng phím Esc
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && els.modal?.classList?.contains("show")) {
+      closeModal();
+    }
   });
 }
 
