@@ -1,12 +1,17 @@
 /* ==================== Sidebar ==================== */
+
 .sidebar {
-  background-color: var(--panel);
-  /* width: 15%; */
-  width: var(--sidebar-width);
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  position: sticky;
+  top: var(
+    --topbar-h,
+    0px
+  ); /* nếu có thanh topbar, set biến này; không có thì =0 */
+  align-self: start; /* quan trọng: để sticky hoạt động trong grid/flex */
+  height: calc(100vh - var(--topbar-h, 0px));
+  overflow: auto; /* nếu nội dung sidebar dài thì chỉ sidebar tự cuộn */
+  border-right: 1px solid #ececf3; /* trang trí (tuỳ) */
+  background: #fff; /* đảm bảo không trong suốt khi trượt */
+  z-index: 1; /* trên nền nội dung */
 }
 
 /* User Profile */
@@ -389,21 +394,47 @@
 
 .cat-footer {
   position: sticky;
-  bottom: -22px; /* chống tràn bóng đổ */
-  padding-top: 8px;
-  margin-top: 8px;
+  width: 100%;
+  bottom: 0; /* dính đáy dialog */
+  z-index: 2;
   background: #fff;
   border-top: 1px solid #ececf3;
+  padding-top: 8px;
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* phần nội dung danh mục là vùng cuộn */
+#modal-categories .cat-pages {
+  flex: 1; /* chiếm toàn bộ không gian giữa header/tabs và footer */
+  min-height: 0; /* bắt buộc để overflow hoạt động trong flex container */
+  overflow: auto; /* chỉ phần này cuộn */
+  padding-right: 6px; /* chừa chỗ scrollbar */
 }
 
 /* ===== Category Modal Tabs ===== */
-.cat-tabs {
+/* .cat-tabs {
+  position: sticky;
   display: flex;
   gap: 8px;
   margin-bottom: 12px;
+} */
+
+.cat-tabs {
+  position: sticky;
+  top: 0; /* dính ngay dưới header */
+  z-index: 2; /* nổi trên phần cuộn */
+  background: #fff; /* nền trắng để không lộ nội dung phía sau khi cuộn */
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #ececf3;
+  padding-bottom: 8px;
 }
 
 .modal-tab {
+  position: sticky;
   flex: 1;
   padding: 10px 0;
   border: none;
@@ -472,4 +503,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
+}
+
+#modal-categories .dialog {
+  height: 75vh; /* bạn có thể đổi 76–90vh tùy ý */
 }
