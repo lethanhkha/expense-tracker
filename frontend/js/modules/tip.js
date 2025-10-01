@@ -18,6 +18,8 @@ import {
 
 import { showToast } from "../modules/toast.js";
 
+import { wireModal } from "../modules/modal.js";
+
 let currentTips = [];
 
 let walletMap = {};
@@ -127,6 +129,8 @@ export function initTip({ onChanged } = {}) {
   const list = document.getElementById("tip-list");
   const walletSelect = document.getElementById("tip-wallet");
 
+  const tipW = tipModal ? wireModal(tipModal) : null;
+
   function openTipModal(mode = "add", data = null) {
     tipForm?.reset();
     ensureDefaultDate(document.getElementById("tip-date"), todayISO());
@@ -154,13 +158,11 @@ export function initTip({ onChanged } = {}) {
 
     loadWallets(preselect);
 
-    tipModal.classList.add("show");
-    document.body.style.overflow = "hidden";
+    tipW?.open();
   }
 
   function closeTipModal() {
-    tipModal.classList.remove("show");
-    document.body.style.overflow = "";
+    tipW?.close();
   }
 
   async function loadWallets(preselectId) {
@@ -217,16 +219,7 @@ export function initTip({ onChanged } = {}) {
 
   // Events
   tipOpenBtn?.addEventListener("click", () => openTipModal("add"));
-  tipModal
-    ?.querySelectorAll("[data-close]")
-    .forEach((b) => b.addEventListener("click", closeTipModal));
-  tipModal?.addEventListener("click", (e) => {
-    if (e.target === tipModal) closeTipModal();
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && tipModal.classList.contains("show"))
-      closeTipModal();
-  });
+
   tipForm?.addEventListener("submit", submitTipForm);
 
   list?.addEventListener("click", async (e) => {

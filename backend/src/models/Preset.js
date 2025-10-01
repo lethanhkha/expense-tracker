@@ -1,11 +1,15 @@
-// models/Preset.js
+//Danh mục mẫu
 import mongoose from "mongoose";
 
 const PresetSchema = new mongoose.Schema(
   {
+    //Loại danh mục (Thu nhập || Chi tiêu)
     type: { type: String, enum: ["income", "expense"], required: true },
+    //Nguồn chi tiêu || Nguồn thu nhập (giống source bên Income.js và Expense.js)
     source: { type: String, required: true, trim: true },
+    //Số tiền
     amount: { type: Number, required: true, min: 0 },
+    //Ghi chú
     note: { type: String, trim: true, default: "" },
   },
   { timestamps: true }

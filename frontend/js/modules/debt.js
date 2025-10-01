@@ -6,6 +6,7 @@ import {
 } from "../data/storage.api.js";
 import { showToast } from "../modules/toast.js";
 import { setupQuickAmountButtons } from "../modules/formatAndQuickbuttons.js";
+import { wireModal } from "../modules/modal.js";
 
 const els = {
   list: document.getElementById("debt-list"),
@@ -20,17 +21,19 @@ const els = {
 let current = []; // danh sách nợ
 let editingId = null; // id đang sửa
 
+const debtModal = document.getElementById("modal-debt")
+  ? wireModal(document.getElementById("modal-debt"))
+  : null;
+
 function fmtMoney(v) {
   return (+v || 0).toLocaleString("vi-VN");
 }
 function openModal() {
-  els.modal.classList.add("show");
-  document.body.style.overflow = "hidden";
+  debtModal?.open();
   attachQuickButtons();
 }
 function closeModal() {
-  els.modal.classList.remove("show");
-  document.body.style.overflow = "";
+  debtModal?.close();
   els.form.reset();
   editingId = null;
   els.title.textContent = "Thêm khoản nợ";
@@ -198,22 +201,6 @@ function bindEvents() {
       } catch (err) {
         Swal.fire("Lỗi!", err?.message || "Xoá khoản nợ thất bại.", "error");
       }
-    }
-  });
-
-  // close modal
-  els.modal?.addEventListener("click", (e) => {
-    if (e.target === els.modal) closeModal();
-    const btnClose = e.target.closest("[data-close]");
-    if (btnClose) {
-      closeModal();
-    }
-  });
-
-  // Đóng bằng phím Esc
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && els.modal?.classList?.contains("show")) {
-      closeModal();
     }
   });
 }

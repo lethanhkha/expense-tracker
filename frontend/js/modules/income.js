@@ -16,25 +16,16 @@ import {
   setupQuickAmountButtons,
   ensureDefaultDate,
   escapeHtml,
+  formatDateTimeVN,
 } from "../modules/formatAndQuickbuttons.js";
+
+import { wireModal } from "../modules/modal.js";
 
 let walletMap = {};
 
 async function refreshWalletMap() {
   const wallets = await getWallets();
   walletMap = Object.fromEntries(wallets.map((w) => [String(w._id), w.name]));
-}
-
-/**
- * Convert a yyyy-mm-dd date string to dd/MM/yyyy for display.
- * Returns an empty string if the input is falsy.
- * @param {string} dateStr
- * @returns {string}
- */
-function formatDate(dateStr) {
-  if (!dateStr) return "";
-  const [year, month, day] = dateStr.split("-");
-  return `${day}/${month}/${year}`;
 }
 
 /**
@@ -60,6 +51,8 @@ export function initIncome({ onChanged }) {
   const walletSelect = document.getElementById("income-wallet");
   const listEl = document.getElementById("income-list");
   let currentIncomes = [];
+
+  const incomeModal = modal ? wireModal(modal) : null;
 
   async function loadIncomePresets() {
     if (!presetSelect) return;
@@ -165,25 +158,14 @@ export function initIncome({ onChanged }) {
 
     presetSelect && (presetSelect.value = "");
 
-    modal.classList.add("show");
-    document.body.style.overflow = "hidden";
+    incomeModal?.open();
   }
 
   function close() {
-    modal.classList.remove("show");
-    document.body.style.overflow = "";
+    incomeModal?.close();
   }
 
   openBtn?.addEventListener("click", () => open());
-  modal
-    .querySelectorAll("[data-close]")
-    .forEach((b) => b.addEventListener("click", close));
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) close();
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && modal.classList.contains("show")) close();
-  });
 
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -295,13 +277,16 @@ export function initIncome({ onChanged }) {
                   <span class="wallet">(Ví: ${escapeHtml(
                     walletMap[String(i.walletId ?? "")] || "—"
                   )})</span>
-                </div>
-              </div>
-            </div>
-          </li>
-        `
+                  </div>
+                  </div>
+                  </div>
+                  </li>
+                  `
       )
       .join("");
+    // <span class="income-created muted" title="${escapeHtml(
+    //   i.createdAt || ""
+    // )}">• tạo lúc ${formatDateTimeVN(i.createdAt)}</span>
   }
 
   listEl?.addEventListener("click", async (e) => {

@@ -14,11 +14,13 @@ import {
 } from "../data/storage.api.js";
 
 import { showToast } from "../modules/toast.js";
+import { wireModal } from "../modules/modal.js";
 
 export function initCategories() {
   const openBtn = document.getElementById("categoryButton");
   const modal = document.getElementById("modal-categories");
   if (!modal || !openBtn) return;
+  const catModal = modal ? wireModal(modal) : null;
 
   const closeBtns = modal.querySelectorAll("[data-close]");
   const tabBtns = modal.querySelectorAll(".modal-tab");
@@ -166,27 +168,19 @@ export function initCategories() {
 
   // ===== Open/Close =====
   function open() {
-    modal.classList.add("show");
-    document.body.style.overflow = "hidden";
+    catModal?.open();
     modal.dataset.mode = "list";
     switchTab("cat-income");
     refreshPresets();
     refreshWallets();
   }
   function close() {
-    modal.classList.remove("show");
-    document.body.style.overflow = "";
+    catModal?.close();
   }
 
   // ===== Events =====
   openBtn.addEventListener("click", open);
   closeBtns.forEach((b) => b.addEventListener("click", close));
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) close();
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && modal.classList.contains("show")) close();
-  });
   tabBtns.forEach((b) =>
     b.addEventListener("click", () => switchTab(b.dataset.tab))
   );

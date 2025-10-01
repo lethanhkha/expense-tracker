@@ -18,7 +18,6 @@ dotenv.config({ path: envFile });
 
 const app = express();
 
-// app.use(cors({ origin: true, credentials: true }));
 const allow = (process.env.CORS_ORIGIN || "")
   .split(",")
   .map((s) => s.trim())

@@ -5,7 +5,9 @@ import Tip from "../models/Tip.js";
 import Income from "../models/Income.js";
 import mongoose from "mongoose";
 
-// đặt ngay trên đầu file expenses.js (sau các import)
+const r = Router();
+
+//Tính tổng tiền ví theo id ví
 async function computeWalletBalanceById(wid, session) {
   if (!wid) return 0;
   const oid = typeof wid === "string" ? new mongoose.Types.ObjectId(wid) : wid;
@@ -32,7 +34,18 @@ async function computeWalletBalanceById(wid, session) {
   return sumIncome + sumTip - sumExpense;
 }
 
-const r = Router();
+// YYYY-MM-DD theo múi giờ Asia/Ho_Chi_Minh (+07:00)
+function toLocalISO_HCM(input) {
+  const d = new Date(input);
+  const y = d.getUTCFullYear(),
+    m = d.getUTCMonth(),
+    day = d.getUTCDate();
+  const local = new Date(Date.UTC(y, m, day, 7, 0, 0));
+  const yy = local.getUTCFullYear();
+  const mm = String(local.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(local.getUTCDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
+}
 
 r.get("/", async (req, res, next) => {
   try {
@@ -58,7 +71,16 @@ r.post("/", async (req, res) => {
     const { source, amount, date, note, walletId } = req.body;
 
     const [exp] = await Expense.create(
-      [{ source, amount, date, note, walletId }],
+      [
+        {
+          source,
+          amount,
+          date,
+          note,
+          walletId,
+          localDate: toLocalISO_HCM(date),
+        },
+      ],
       { session }
     );
 
@@ -79,80 +101,6 @@ r.post("/", async (req, res) => {
   }
 });
 
-r.put("/:id", async (req, res, next) => {
-  try {
-    const updated = await Expense.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-    if (!updated) return res.status(404).json({ message: "Not found" });
-    res.json(updated);
-  } catch (e) {
-    next(e);
-  }
-});
-
-// r.delete("/:id", async (req, res, next) => {
-//   try {
-//     const deleted = await Expense.findByIdAndDelete(req.params.id);
-//     if (!deleted) return res.status(404).json({ message: "Not found" });
-//     res.json({ ok: true });
-//   } catch (e) {
-//     next(e);
-//   }
-// });
-
-// r.patch("/:id", async (req, res) => {
-//   const session = await mongoose.startSession();
-//   session.startTransaction();
-//   try {
-//     const old = await Expense.findById(req.params.id).session(session);
-//     if (!old) throw new Error("Expense not found");
-
-//     const updated = await Expense.findByIdAndUpdate(req.params.id, req.body, {
-//       new: true,
-//       session,
-//     });
-
-//     const oldAmount = Number(old.amount || 0);
-//     const newAmount = Number(updated.amount || 0);
-//     const delta = newAmount - oldAmount;
-
-//     const oldWid = String(old.walletId || "");
-//     const newWid = String(updated.walletId || "");
-
-//     if (oldWid && newWid && oldWid === newWid) {
-//       const w = await Wallet.findById(newWid).session(session);
-//       if (w) {
-//         w.balance -= delta;
-//         await w.save({ session });
-//       } // delta cho Expense là trừ
-//     } else {
-//       if (oldWid) {
-//         const wOld = await Wallet.findById(oldWid).session(session);
-//         if (wOld) {
-//           wOld.balance += oldAmount;
-//           await wOld.save({ session });
-//         } // hoàn lại số cũ
-//       }
-//       if (newWid) {
-//         const wNew = await Wallet.findById(newWid).session(session);
-//         if (wNew) {
-//           wNew.balance -= newAmount;
-//           await wNew.save({ session });
-//         } // trừ số mới
-//       }
-//     }
-
-//     await session.commitTransaction();
-//     res.json(updated);
-//   } catch (e) {
-//     await session.abortTransaction();
-//     res.status(400).json({ message: e.message });
-//   } finally {
-//     session.endSession();
-//   }
-// });
-
 r.patch("/:id", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -165,7 +113,15 @@ r.patch("/:id", async (req, res) => {
     }
 
     // Cập nhật
-    const updated = await Expense.findByIdAndUpdate(req.params.id, req.body, {
+
+    // const updated = await Expense.findByIdAndUpdate(req.params.id, req.body, {
+    //   new: true,
+    //   session,
+    // });
+
+    const patch = { ...req.body };
+    if (patch.date) patch.localDate = toLocalISO_HCM(patch.date);
+    const updated = await Expense.findByIdAndUpdate(req.params.id, patch, {
       new: true,
       session,
     });

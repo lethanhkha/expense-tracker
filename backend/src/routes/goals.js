@@ -75,57 +75,6 @@ r.post("/", async (req, res, next) => {
   }
 });
 
-/** PATCH /api/goals/:id */
-r.patch("/:id", async (req, res, next) => {
-  try {
-    const g = await Goal.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-    if (!g) return res.status(404).json({ message: "Goal not found" });
-    res.json(g);
-  } catch (e) {
-    next(e);
-  }
-});
-
-/** DELETE /api/goals/:id  (xoá goal + contributions + expense liên quan, recompute ví bị ảnh hưởng) */
-r.delete("/:id", async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
-    const gid = req.params.id;
-    const contribs = await GoalContribution.find({ goalId: gid }).session(
-      session
-    );
-    const affectedWallets = new Set(
-      contribs.map((c) => String(c.walletId || ""))
-    );
-
-    // xoá expenses liên quan
-    const expIds = contribs.map((c) => c.expenseId).filter(Boolean);
-    if (expIds.length) {
-      await Expense.deleteMany({ _id: { $in: expIds } }).session(session);
-    }
-
-    await GoalContribution.deleteMany({ goalId: gid }).session(session);
-    await Goal.findByIdAndDelete(gid).session(session);
-
-    for (const wid of affectedWallets) {
-      if (!wid) continue;
-      const bal = await computeWalletBalanceById(wid, session);
-      await Wallet.findByIdAndUpdate(wid, { balance: bal }, { session });
-    }
-
-    await session.commitTransaction();
-    res.json({ ok: true });
-  } catch (e) {
-    await session.abortTransaction();
-    res.status(400).json({ message: e.message });
-  } finally {
-    session.endSession();
-  }
-});
-
 /** POST /api/goals/:id/contributions  (tạo contribution + tạo Expense liên kết + recompute ví) */
 r.post("/:id/contributions", async (req, res) => {
   const session = await mongoose.startSession();
@@ -180,6 +129,57 @@ r.post("/:id/contributions", async (req, res) => {
 
     await session.commitTransaction();
     res.status(201).json({ contribution: contrib, expense: exp });
+  } catch (e) {
+    await session.abortTransaction();
+    res.status(400).json({ message: e.message });
+  } finally {
+    session.endSession();
+  }
+});
+
+/** PATCH /api/goals/:id */
+r.patch("/:id", async (req, res, next) => {
+  try {
+    const g = await Goal.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    if (!g) return res.status(404).json({ message: "Goal not found" });
+    res.json(g);
+  } catch (e) {
+    next(e);
+  }
+});
+
+/** DELETE /api/goals/:id  (xoá goal + contributions + expense liên quan, recompute ví bị ảnh hưởng) */
+r.delete("/:id", async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const gid = req.params.id;
+    const contribs = await GoalContribution.find({ goalId: gid }).session(
+      session
+    );
+    const affectedWallets = new Set(
+      contribs.map((c) => String(c.walletId || ""))
+    );
+
+    // xoá expenses liên quan
+    const expIds = contribs.map((c) => c.expenseId).filter(Boolean);
+    if (expIds.length) {
+      await Expense.deleteMany({ _id: { $in: expIds } }).session(session);
+    }
+
+    await GoalContribution.deleteMany({ goalId: gid }).session(session);
+    await Goal.findByIdAndDelete(gid).session(session);
+
+    for (const wid of affectedWallets) {
+      if (!wid) continue;
+      const bal = await computeWalletBalanceById(wid, session);
+      await Wallet.findByIdAndUpdate(wid, { balance: bal }, { session });
+    }
+
+    await session.commitTransaction();
+    res.json({ ok: true });
   } catch (e) {
     await session.abortTransaction();
     res.status(400).json({ message: e.message });
