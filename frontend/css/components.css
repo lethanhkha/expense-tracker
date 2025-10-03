@@ -352,7 +352,7 @@
 .group-title-filter-bar {
   display: flex;
   gap: 10px;
-  justify-content: center;
+  align-items: center;
   width: 100%;
 }
 
@@ -371,6 +371,7 @@
   background: var(--panel-bg, #fff);
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   z-index: 9;
+  max-width: 100%;
 }
 .wallet-pill {
   white-space: nowrap;
