@@ -8,12 +8,40 @@ import Tip from "../models/Tip.js";
 const r = express.Router();
 const sumExpr = { $sum: { $toDouble: { $ifNull: ["$amount", 0] } } };
 
+// Hàm tính lại balance cho 1 ví
+async function computeWalletBalanceById(wid, session) {
+  const [incAgg, expAgg, tipAgg] = await Promise.all([
+    Income.aggregate([
+      { $match: { walletId: wid } },
+      { $group: { _id: null, total: sumExpr } },
+    ]).session(session),
+    Expense.aggregate([
+      { $match: { walletId: wid } },
+      { $group: { _id: null, total: sumExpr } },
+    ]).session(session),
+    Tip.aggregate([
+      { $match: { walletId: wid, received: true } },
+      { $group: { _id: null, total: sumExpr } },
+    ]).session(session),
+  ]);
+
+  const sumIncome = Number(incAgg?.[0]?.total || 0);
+  const sumExpense = Number(expAgg?.[0]?.total || 0);
+  const sumTip = Number(tipAgg?.[0]?.total || 0);
+  return sumIncome + sumTip - sumExpense;
+}
+
 // GET /api/wallets
 r.get("/", async (_req, res) => {
-  const list = await Wallet.find({ archived: false }).sort({
-    isDefault: -1,
-    createdAt: 1,
-  });
+  const raw = await Wallet.find({ archived: false })
+    .sort({ isDefault: -1, createdAt: 1 })
+    .lean();
+  const list = await Promise.all(
+    raw.map(async (w) => {
+      const balance = await computeWalletBalanceById(w._id, null);
+      return { ...w, balance };
+    })
+  );
   res.json(list);
 });
 
@@ -116,32 +144,6 @@ r.post("/recompute", async (_req, res) => {
   }
 });
 
-// PATCH /api/wallets/:id
-r.patch("/:id", async (req, res) => {
-  try {
-    const updated = await Wallet.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-    res.json(updated);
-  } catch (e) {
-    res.status(400).json({ message: e.message });
-  }
-});
-
-// DELETE /api/wallets/:id  (archive)
-r.delete("/:id", async (req, res) => {
-  try {
-    const updated = await Wallet.findByIdAndUpdate(
-      req.params.id,
-      { archived: true },
-      { new: true }
-    );
-    res.json(updated);
-  } catch (e) {
-    res.status(400).json({ message: e.message });
-  }
-});
-
 // OPTIONAL: chuyển tiền giữa ví
 r.post("/transfer", async (req, res) => {
   const { fromWalletId, toWalletId, amount, note, date } = req.body || {};
@@ -185,27 +187,30 @@ r.post("/transfer", async (req, res) => {
   }
 });
 
-// Hàm tính lại balance cho 1 ví
-async function computeWalletBalanceById(wid, session) {
-  const [incAgg, expAgg, tipAgg] = await Promise.all([
-    Income.aggregate([
-      { $match: { walletId: wid } },
-      { $group: { _id: null, total: sumExpr } },
-    ]).session(session),
-    Expense.aggregate([
-      { $match: { walletId: wid } },
-      { $group: { _id: null, total: sumExpr } },
-    ]).session(session),
-    Tip.aggregate([
-      { $match: { walletId: wid } },
-      { $group: { _id: null, total: sumExpr } },
-    ]).session(session),
-  ]);
+// PATCH /api/wallets/:id
+r.patch("/:id", async (req, res) => {
+  try {
+    const updated = await Wallet.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    res.json(updated);
+  } catch (e) {
+    res.status(400).json({ message: e.message });
+  }
+});
 
-  const sumIncome = Number(incAgg?.[0]?.total || 0);
-  const sumExpense = Number(expAgg?.[0]?.total || 0);
-  const sumTip = Number(tipAgg?.[0]?.total || 0);
-  return sumIncome + sumTip - sumExpense;
-}
+// DELETE /api/wallets/:id  (archive)
+r.delete("/:id", async (req, res) => {
+  try {
+    const updated = await Wallet.findByIdAndUpdate(
+      req.params.id,
+      { archived: true },
+      { new: true }
+    );
+    res.json(updated);
+  } catch (e) {
+    res.status(400).json({ message: e.message });
+  }
+});
 
 export default r;

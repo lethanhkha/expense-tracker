@@ -13,7 +13,10 @@ import {
   setupQuickAmountButtons,
   todayISO,
   ensureDefaultDate,
+  escapeHtml,
 } from "./formatAndQuickbuttons.js";
+import { showToast } from "./toast.js";
+import { wireModal } from "./modal.js";
 
 let currentGoals = [];
 let walletMap = {};
@@ -29,6 +32,11 @@ const els = {
   modalContrib: document.getElementById("modal-goal-contrib"),
   modalWithdraw: document.getElementById("modal-goal-withdraw"),
 };
+
+// Khởi tạo helper cho 3 modal
+const goalModal = els.modalGoal ? wireModal(els.modalGoal) : null;
+const contribModal = els.modalContrib ? wireModal(els.modalContrib) : null;
+const withdrawModal = els.modalWithdraw ? wireModal(els.modalWithdraw) : null;
 
 async function refreshWalletMap() {
   const wallets = await getWallets();
@@ -60,15 +68,16 @@ async function render() {
   els.empty.style.display = goals.length ? "none" : "block";
 
   list.innerHTML = goals
-
     .map((g) => {
+      const name = escapeHtml(g.name ?? "");
+      const note = escapeHtml(g.note ?? "");
       const pct = progressPct(g.savedAmount, g.targetAmount);
       return `
       <li class="goal" data-id="${g._id}">
         <div class="row between">
           <div>
-            <b>${g.name}</b>
-            ${g.note ? `<div class="muted small">${g.note}</div>` : ""}
+            <b>${name}</b>
+            ${g.note ? `<div class="muted small">${note}</div>` : ""}
           </div>
           <div class="muted">
             ${formatCurrency(g.savedAmount)} / ${formatCurrency(g.targetAmount)}
@@ -97,27 +106,13 @@ function openModalGoal() {
   } else {
     m.querySelector("#goal-modal-title").textContent = "Sửa mục tiêu";
   }
-  m.classList.add("show");
-  document.body.style.overflow = "hidden";
+  goalModal?.open();
 }
 
 function closeModalGoal() {
-  els.modalGoal.classList.remove("show");
-  document.body.style.overflow = "";
+  goalModal?.close();
   editingId = null; // reset
 }
-
-// Đóng bằng overlay/Esc
-els.modalGoal?.addEventListener("click", (e) => {
-  if (e.target === els.modalGoal) closeModalGoal();
-  const btnClose = e.target.closest("[data-close]");
-  if (btnClose) closeModalGoal();
-});
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && els.modalGoal.classList.contains("show")) {
-    closeModalGoal();
-  }
-});
 
 function openModalContrib(goalId) {
   const m = els.modalContrib;
@@ -138,13 +133,11 @@ function openModalContrib(goalId) {
   const dateInput = form.querySelector('input[name="date"]');
   ensureDefaultDate(dateInput, todayISO());
 
-  m.classList.add("show");
-  document.body.style.overflow = "hidden";
+  contribModal?.open();
 }
 
 function closeModalContrib() {
-  els.modalContrib.classList.remove("show");
-  document.body.style.overflow = "";
+  contribModal?.close();
 }
 
 function openModalWithdraw(goalId) {
@@ -161,47 +154,12 @@ function openModalWithdraw(goalId) {
   const dateInput = form.querySelector('input[name="date"]');
   ensureDefaultDate(dateInput, todayISO());
 
-  m.classList.add("show");
-  document.body.style.overflow = "hidden";
+  withdrawModal?.open();
 }
 
 function closeModalWithdraw() {
-  els.modalWithdraw.classList.remove("show");
-  document.body.style.overflow = "";
+  withdrawModal?.close();
 }
-
-// Đóng modal Rút: overlay + nút [data-close]
-els.modalWithdraw?.addEventListener("click", (e) => {
-  // click ra ngoài overlay
-  if (e.target === els.modalWithdraw) closeModalWithdraw();
-  // bấm nút ✕ có data-close
-  const btnClose = e.target.closest("[data-close]");
-  if (btnClose) closeModalWithdraw();
-});
-
-// Đóng modal Góp: overlay + nút [data-close]
-els.modalContrib?.addEventListener("click", (e) => {
-  if (e.target === els.modalContrib) closeModalContrib();
-  const btnClose = e.target.closest("[data-close]");
-  if (btnClose) closeModalContrib();
-});
-
-// Đóng bằng phím Esc cho modal withdraw
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && els.modalWithdraw.classList.contains("show")) {
-    closeModalWithdraw();
-  }
-});
-
-// Đóng bằng overlay/Esc
-els.modalContrib?.addEventListener("click", (e) => {
-  if (e.target === els.modalContrib) closeModalContrib();
-});
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && els.modalContrib.classList.contains("show")) {
-    closeModalContrib();
-  }
-});
 
 export function initGoals() {
   if (!els.page) return;
@@ -215,6 +173,10 @@ export function initGoals() {
 
     if (e.target.closest(".add-contrib")) {
       await refreshWalletMap();
+      if (!Object.keys(walletMap).length) {
+        Swal.fire("Chưa có ví", "Hãy tạo ít nhất 1 ví trước khi góp.", "info");
+        return;
+      }
       openModalContrib(id);
       return;
     }
@@ -278,6 +240,7 @@ export function initGoals() {
       } catch (err) {
         Swal.fire("Lỗi!", err?.message || "Xoá thất bại.", "error");
       }
+
       return;
     }
   });
@@ -316,8 +279,10 @@ export function initGoals() {
       try {
         if (editingId) {
           await updateGoal(editingId, payload);
+          showToast("Đã cập nhật mục tiêu!");
         } else {
           await createGoal(payload);
+          showToast("Đã tạo mục tiêu!");
         }
         closeModalGoal();
         await render();
@@ -367,6 +332,7 @@ export function initGoals() {
       }
       try {
         await createGoalContribution(goalId, payload);
+        showToast("Đã ghi nhận khoản góp!");
         closeModalContrib();
         await render();
         // ví & KPI đổi ngay

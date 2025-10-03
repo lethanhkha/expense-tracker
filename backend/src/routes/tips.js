@@ -33,6 +33,18 @@ async function computeWalletBalanceById(wid, session) {
   return sumIncome + sumTip - sumExpense;
 }
 
+function toLocalISO_HCM(input) {
+  const d = new Date(input);
+  const y = d.getUTCFullYear(),
+    m = d.getUTCMonth(),
+    day = d.getUTCDate();
+  const local = new Date(Date.UTC(y, m, day, 7, 0, 0));
+  const yy = local.getUTCFullYear();
+  const mm = String(local.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(local.getUTCDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
+}
+
 r.get("/", async (req, res, next) => {
   try {
     const { from, to } = req.query;
@@ -49,54 +61,13 @@ r.get("/", async (req, res, next) => {
   }
 });
 
-r.put("/:id", async (req, res, next) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
-    const before = await Tip.findById(req.params.id).session(session);
-    if (!before) {
-      await session.abortTransaction();
-      return res.status(404).json({ message: "Not found" });
-    }
-    const updated = await Tip.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      session,
-    });
-    const affected = [
-      String(before.walletId || ""),
-      String(updated.walletId || ""),
-    ].filter(Boolean);
-    const unique = [...new Set(affected)];
-    for (const wid of unique) {
-      const bal = await computeWalletBalanceById(wid, session);
-      await Wallet.findByIdAndUpdate(wid, { balance: bal }, { session });
-    }
-    await session.commitTransaction();
-    res.json(updated);
-  } catch (e) {
-    await session.abortTransaction();
-    next(e);
-  } finally {
-    session.endSession();
-  }
-});
-
 r.post("/", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    // const [tip] = await Tip.create([req.body], { session });
-
-    // if (req.body.walletId) {
-    //   const w = await Wallet.findById(req.body.walletId).session(session);
-    //   if (!w) throw new Error("Wallet not found");
-    //   w.balance += Number(req.body.amount || 0); // giống Income
-    //   await w.save({ session });
-    // }
-
-    const [tip] = await Tip.create([{ ...req.body, received: false }], {
-      session,
-    });
+    const body = { ...req.body, received: false };
+    if (body.date) body.localDate = toLocalISO_HCM(body.date);
+    const [tip] = await Tip.create([body], { session });
 
     await session.commitTransaction();
     res.status(201).json(tip);
@@ -120,7 +91,9 @@ r.patch("/:id", async (req, res) => {
     }
 
     // Cập nhật
-    const updated = await Tip.findByIdAndUpdate(req.params.id, req.body, {
+    const patch = { ...req.body };
+    if (patch.date) patch.localDate = toLocalISO_HCM(patch.date);
+    const updated = await Tip.findByIdAndUpdate(req.params.id, patch, {
       new: true,
       session,
     });

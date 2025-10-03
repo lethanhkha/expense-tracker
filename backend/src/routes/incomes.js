@@ -33,6 +33,18 @@ async function computeWalletBalanceById(wid, session) {
   return sumIncome + sumTip - sumExpense;
 }
 
+function toLocalISO_HCM(input) {
+  const d = new Date(input);
+  const y = d.getUTCFullYear(),
+    m = d.getUTCMonth(),
+    day = d.getUTCDate();
+  const local = new Date(Date.UTC(y, m, day, 7, 0, 0));
+  const yy = local.getUTCFullYear();
+  const mm = String(local.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(local.getUTCDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
+}
+
 r.get("/", async (req, res, next) => {
   try {
     const { from, to } = req.query;
@@ -49,23 +61,13 @@ r.get("/", async (req, res, next) => {
   }
 });
 
-r.put("/:id", async (req, res, next) => {
-  try {
-    const updated = await Income.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-    if (!updated) return res.status(404).json({ message: "Not found" });
-    res.json(updated);
-  } catch (e) {
-    next(e);
-  }
-});
-
 r.post("/", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const [inc] = await Income.create([req.body], { session });
+    const body = { ...req.body };
+    if (body.date) body.localDate = toLocalISO_HCM(body.date);
+    const [inc] = await Income.create([body], { session });
 
     if (req.body.walletId) {
       const w = await Wallet.findById(req.body.walletId).session(session);
@@ -84,115 +86,6 @@ r.post("/", async (req, res) => {
   }
 });
 
-// r.patch("/:id", async (req, res) => {
-//   const session = await mongoose.startSession();
-//   session.startTransaction();
-//   try {
-//     const old = await Income.findById(req.params.id).session(session);
-//     if (!old) throw new Error("Income not found");
-
-//     const updated = await Income.findByIdAndUpdate(req.params.id, req.body, {
-//       new: true,
-//       session,
-//     });
-
-//     const oldAmount = Number(old.amount || 0);
-//     const newAmount = Number(updated.amount || 0);
-//     const delta = newAmount - oldAmount;
-
-//     const oldWid = String(old.walletId || "");
-//     const newWid = String(updated.walletId || "");
-
-//     if (oldWid && newWid && oldWid === newWid) {
-//       const w = await Wallet.findById(newWid).session(session);
-//       if (w) {
-//         w.balance += delta;
-//         await w.save({ session });
-//       }
-//     } else {
-//       if (oldWid) {
-//         const wOld = await Wallet.findById(oldWid).session(session);
-//         if (wOld) {
-//           wOld.balance -= oldAmount;
-//           await wOld.save({ session });
-//         }
-//       }
-//       if (newWid) {
-//         const wNew = await Wallet.findById(newWid).session(session);
-//         if (wNew) {
-//           wNew.balance += newAmount;
-//           await wNew.save({ session });
-//         }
-//       }
-//     }
-
-//     await session.commitTransaction();
-//     res.json(updated);
-//   } catch (e) {
-//     await session.abortTransaction();
-//     res.status(400).json({ message: e.message });
-//   } finally {
-//     session.endSession();
-//   }
-// });
-
-// ví dụ cho incomes.js
-// r.patch("/:id", async (req, res) => {
-//   const session = await mongoose.startSession();
-//   session.startTransaction();
-//   try {
-//     const old = await Income.findById(req.params.id).session(session);
-//     if (!old) return res.status(404).json({ message: "Not found" });
-
-//     const { amount, walletId, ...rest } = req.body;
-
-//     const amtOld = Number(old.amount || 0);
-//     const amtNew = amount != null ? Number(amount) : amtOld;
-//     const walletOld = old.walletId?.toString() || null;
-//     const walletNew = walletId || walletOld;
-
-//     // 1) cập nhật bản ghi
-//     old.set({ ...rest, amount: amtNew, walletId: walletNew });
-//     await old.save({ session });
-
-//     // 2) cân lại số dư ví
-//     if (walletOld === walletNew) {
-//       // cùng ví: chỉ cần chênh lệch amount
-//       if (amtNew !== amtOld) {
-//         const w = await Wallet.findById(walletNew).session(session);
-//         if (w) {
-//           w.balance += amtNew - amtOld;
-//           await w.save({ session });
-//         }
-//       }
-//     } else {
-//       // khác ví: trừ ví cũ, cộng ví mới
-//       if (walletOld) {
-//         const wOld = await Wallet.findById(walletOld).session(session);
-//         if (wOld) {
-//           wOld.balance -= amtOld;
-//           await wOld.save({ session });
-//         }
-//       }
-//       if (walletNew) {
-//         const wNew = await Wallet.findById(walletNew).session(session);
-//         if (wNew) {
-//           wNew.balance += amtNew;
-//           await wNew.save({ session });
-//         }
-//       }
-//     }
-
-//     await session.commitTransaction();
-//     res.json(old);
-//   } catch (e) {
-//     await session.abortTransaction();
-//     res.status(400).json({ message: e.message });
-//   } finally {
-//     session.endSession();
-//   }
-// });
-
 r.patch("/:id", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -203,7 +96,9 @@ r.patch("/:id", async (req, res) => {
       return res.status(404).json({ message: "Không tìm thấy khoản thu." });
     }
 
-    const updated = await Income.findByIdAndUpdate(req.params.id, req.body, {
+    const patch = { ...req.body };
+    if (patch.date) patch.localDate = toLocalISO_HCM(patch.date);
+    const updated = await Income.findByIdAndUpdate(req.params.id, patch, {
       new: true,
       session,
     });

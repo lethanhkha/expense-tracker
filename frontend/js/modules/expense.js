@@ -18,6 +18,8 @@ import {
   escapeHtml,
 } from "../modules/formatAndQuickbuttons.js";
 
+import { wireModal } from "../modules/modal.js";
+
 let walletMap = {};
 
 async function refreshWalletMap() {
@@ -43,6 +45,7 @@ export function initExpense({ onChanged }) {
 
   const listEl = document.getElementById("expense-list");
   let currentExpenses = [];
+  const expenseModal = modal ? wireModal(modal) : null;
 
   async function loadExpensePresets() {
     if (!presetSelect) return;
@@ -126,8 +129,7 @@ export function initExpense({ onChanged }) {
 
     loadWallets();
 
-    modal.classList.add("show");
-    document.body.style.overflow = "hidden";
+    expenseModal?.open();
   }
 
   function openEdit(data) {
@@ -144,25 +146,14 @@ export function initExpense({ onChanged }) {
     presetSelect && (presetSelect.value = "");
     // chỉ đổ ví 1 lần và preselect
     loadWallets(data.walletId);
-    modal.classList.add("show");
-    document.body.style.overflow = "hidden";
+    expenseModal?.open();
   }
 
   function close() {
-    modal.classList.remove("show");
-    document.body.style.overflow = "";
+    expenseModal?.close();
   }
 
   openBtn?.addEventListener("click", open);
-  modal
-    .querySelectorAll("[data-close]")
-    .forEach((b) => b.addEventListener("click", close));
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) close();
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && modal.classList.contains("show")) close();
-  });
 
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();

@@ -18,7 +18,6 @@ dotenv.config({ path: envFile });
 
 const app = express();
 
-// app.use(cors({ origin: true, credentials: true }));
 const allow = (process.env.CORS_ORIGIN || "")
   .split(",")
   .map((s) => s.trim())
@@ -48,7 +47,6 @@ app.use("/api/presets", presets);
 app.use("/api/wallets", wallets);
 app.use("/api/debts", debts);
 app.use("/api/goals", goals);
-
 // 404 fallback
 app.use((req, res) => {
   res.status(404).json({ message: "Not Found" });

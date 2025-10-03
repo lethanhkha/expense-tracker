@@ -113,3 +113,25 @@ export function escapeHtml(str) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+
+/**
+ * Hiển thị datetime theo múi giờ VN: "HH:mm dd/MM/yyyy"
+ * Dùng cho createdAt / updatedAt.
+ */
+export function formatDateTimeVN(input) {
+  if (!input) return "";
+  const d = new Date(input);
+  const datePart = new Intl.DateTimeFormat("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(d);
+  const timePart = new Intl.DateTimeFormat("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(d);
+  return `${timePart} ${datePart}`;
+}
