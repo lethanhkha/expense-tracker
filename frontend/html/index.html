@@ -76,7 +76,15 @@
           <div class="card">
             <div class="inner">
               <div class="header">
-                <div class="title">Danh sách khoản thu</div>
+                <div class="group-title-filter-bar">
+                  <div class="title">Danh sách khoản thu</div>
+                  <div class="filter-bar">
+                    <input id="income-month" type="month" />
+                  </div>
+                </div>
+                <button id="btn-export-income" class="btn btn-primary">
+                  Xuất CSV (Thu)
+                </button>
                 <button class="btn primary btn-add" id="btn-add-income">
                   + Thêm khoản thu
                 </button>
@@ -90,9 +98,17 @@
           <div class="card">
             <div class="inner">
               <div class="header">
-                <div class="title">Danh sách khoản chi</div>
+                <div class="group-title-filter-bar">
+                  <div class="title">Danh sách khoản chi</div>
+                  <div class="filter-bar">
+                    <input id="expense-month" type="month" />
+                  </div>
+                </div>
                 <button class="btn primary btn-add" id="btn-add-expense">
                   + Thêm khoản chi
+                </button>
+                <button id="btn-export-expense" class="btn btn-primary">
+                  Xuất CSV (Chi)
                 </button>
               </div>
               <ul id="expense-list"></ul>
@@ -104,9 +120,17 @@
           <div class="card">
             <div class="inner">
               <div class="header">
-                <div class="title">Danh sách tiền tip</div>
+                <div class="group-title-filter-bar">
+                  <div class="title">Danh sách tiền tip</div>
+                  <div class="filter-bar">
+                    <input id="tip-month" type="month" />
+                  </div>
+                </div>
                 <button class="btn primary btn-add" id="btn-add-tip">
                   + Thêm tip
+                </button>
+                <button id="btn-export-tip" class="btn btn-primary">
+                  Xuất CSV (Tip)
                 </button>
               </div>
               <ul id="tip-list"></ul>

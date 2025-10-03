@@ -14,13 +14,13 @@ import {
   escapeHtml,
   setupQuickAmountButtons,
   formatDateDisplayTip,
+  currentMonthRangeISO,
 } from "../modules/formatAndQuickbuttons.js";
-
 import { showToast } from "../modules/toast.js";
-
 import { wireModal } from "../modules/modal.js";
 
 let currentTips = [];
+const monthInput = document.getElementById("tip-month");
 
 let walletMap = {};
 
@@ -28,6 +28,7 @@ async function refreshWalletMap() {
   const wallets = await getWallets();
   walletMap = Object.fromEntries(wallets.map((w) => [String(w._id), w.name]));
 }
+
 function groupBy(arr, keyFn) {
   return arr.reduce((acc, item) => {
     const key = keyFn(item);
@@ -36,13 +37,47 @@ function groupBy(arr, keyFn) {
   }, {});
 }
 
+function ensureMonthDefault() {
+  if (!monthInput) return;
+  if (!monthInput.value) {
+    const now = new Date();
+    monthInput.value =
+      String(now.getFullYear()) +
+      "-" +
+      String(now.getMonth() + 1).padStart(2, "0");
+  }
+}
+
+function monthRangeFromValue(val) {
+  let y, m;
+  if (val && /^\d{4}-\d{2}$/.test(val)) {
+    const [yy, mm] = val.split("-").map((s) => parseInt(s, 10));
+    y = yy;
+    m = mm - 1;
+  } else {
+    const d = new Date();
+    y = d.getFullYear();
+    m = d.getMonth();
+  }
+  const from = new Date(y, m, 1);
+  const to = new Date(y, m + 1, 0);
+  const pad = (n) => String(n).padStart(2, "0");
+  return {
+    from: `${from.getFullYear()}-${pad(from.getMonth() + 1)}-${pad(
+      from.getDate()
+    )}`,
+    to: `${to.getFullYear()}-${pad(to.getMonth() + 1)}-${pad(to.getDate())}`,
+  };
+}
+
 async function renderTips() {
   const list = document.getElementById("tip-list");
   if (!list) return;
-
+  ensureMonthDefault();
   let tips = [];
   try {
-    tips = await getTips();
+    const { from, to } = monthRangeFromValue(monthInput?.value);
+    tips = await getTips({ from, to });
   } catch (err) {
     list.innerHTML = `<li class="muted">Không tải được danh sách tip.</li>`;
     return;
@@ -292,11 +327,73 @@ export function initTip({ onChanged } = {}) {
       return;
     }
   });
-
+  monthInput?.addEventListener("change", () => renderTips());
   renderTips();
 
-  // Trả API giống income/expense
+  // Trả API
   return {
     renderTips,
   };
 }
+
+// === Xuất CSV (Tip - ALL fields) ===
+(function setupTipExportCSV_All() {
+  function normalize(val) {
+    if (val === null || val === undefined) return "";
+    if (typeof val === "object") return JSON.stringify(val);
+    return String(val);
+  }
+  function escCSV(s) {
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  function toCSVAll(rows) {
+    if (!rows.length) return "";
+    const keys = Array.from(
+      rows.reduce((set, r) => {
+        Object.keys(r || {}).forEach((k) => set.add(k));
+        return set;
+      }, new Set())
+    );
+    const head = keys.map((k) => escCSV(k)).join(";");
+    const body = rows
+      .map((r) => keys.map((k) => escCSV(normalize(r?.[k]))).join(";"))
+      .join("\n");
+    return head + "\n" + body;
+  }
+
+  async function fetchTipsAll() {
+    const data = await getTips(); // Trả về mảng Tip trực tiếp
+    return Array.isArray(data) ? data : [];
+  }
+
+  async function exportCSVAll() {
+    try {
+      const list = await fetchTipsAll();
+      if (!list.length) {
+        alert("Không có dữ liệu Tip để xuất.");
+        return;
+      }
+      const csv = toCSVAll(list);
+      const ts = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "");
+      const blob = new Blob([`\uFEFF${csv}`], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `tips-${ts}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      alert("Xuất CSV (Tip) thất bại.");
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const btn = document.querySelector("#btn-export-tip");
+    if (btn) btn.addEventListener("click", exportCSVAll);
+  });
+})();

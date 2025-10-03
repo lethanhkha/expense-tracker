@@ -24,15 +24,33 @@ function buildError(resp, payload) {
   return err;
 }
 
+// async function request(
+//   path,
+//   { method = "GET", headers, body, timeout = DEFAULT_TIMEOUT } = {}
+// ) {
+function appendQuery(path, params) {
+  if (!params || typeof params !== "object") return path;
+  const usp = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v === undefined || v === null) return;
+    usp.append(k, String(v));
+  });
+  const qs = usp.toString();
+  if (!qs) return path;
+  return path + (path.includes("?") ? "&" : "?") + qs;
+}
+
 async function request(
   path,
-  { method = "GET", headers, body, timeout = DEFAULT_TIMEOUT } = {}
+  { method = "GET", headers, body, timeout = DEFAULT_TIMEOUT, params } = {}
 ) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeout);
 
   try {
-    const res = await fetch(BASE + path, {
+    // const res = await fetch(BASE + path, {
+    const finalPath = appendQuery(path, params);
+    const res = await fetch(BASE + finalPath, {
       method,
       headers: { "Content-Type": "application/json", ...(headers || {}) },
       body: body != null ? JSON.stringify(body) : undefined,

@@ -135,3 +135,20 @@ export function formatDateTimeVN(input) {
   }).format(d);
   return `${timePart} ${datePart}`;
 }
+
+/** Lấy khoảng ngày [from, to] của THÁNG HIỆN TẠI (định dạng yyyy-mm-dd) */
+export function currentMonthRangeISO() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth(); // 0..11
+  const from = new Date(y, m, 1);
+  const to = new Date(y, m + 1, 0); // ngày cuối tháng
+  const pad = (n) => String(n).padStart(2, "0");
+  const fromISO = `${from.getFullYear()}-${pad(from.getMonth() + 1)}-${pad(
+    from.getDate()
+  )}`;
+  const toISO = `${to.getFullYear()}-${pad(to.getMonth() + 1)}-${pad(
+    to.getDate()
+  )}`;
+  return { from: fromISO, to: toISO };
+}
