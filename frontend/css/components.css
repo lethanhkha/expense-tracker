@@ -345,13 +345,15 @@
   padding: 4px 8px;
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 5px;
+  width: 100% !important;
+  flex: 1;
 }
 
 .group-title-filter-bar {
   display: flex;
   gap: 10px;
   justify-content: center;
-  align-items: center;
+  width: 100%;
 }
 
 .filter-bar {
@@ -377,6 +379,13 @@
   padding: 6px 10px;
   font-size: 12px;
 }
+
+@media (max-width: 768px) {
+  .wallet-pill {
+    font-size: 18px;
+  }
+}
+
 .wallet-pill .name {
   font-weight: 600;
   margin-right: 6px;
