@@ -540,3 +540,13 @@
   height: 100%;
   background: #6c7cff;
 }
+
+@media (max-width: 600px) {
+  .group-title-filter-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+  }
+}
