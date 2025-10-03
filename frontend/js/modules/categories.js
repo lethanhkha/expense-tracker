@@ -11,6 +11,7 @@ import {
   createWallet,
   updateWallet,
   deleteWallet,
+  setDefaultWallet,
 } from "../data/storage.api.js";
 
 import { showToast } from "../modules/toast.js";
@@ -150,6 +151,11 @@ export function initCategories() {
           <div class="cat-actions">
             <button class="btn ghost icon" type="button" data-action="edit-wallet" title="Sửa">✏️</button>
             <button class="btn ghost icon" type="button" data-action="delete-wallet" title="Xoá">🗑️</button>
+            ${
+              w.isDefault
+                ? ""
+                : `<button class="btn ghost icon" type="button" data-action="set-default" title="Đặt mặc định">⭐</button>`
+            }
           </div>
           <span class="cat-amount">
             ${formatCurrency(+w.balance || 0)} ${escapeHtml(
@@ -305,6 +311,17 @@ export function initCategories() {
         Swal.fire("Đã xoá!", "Danh mục đã bị xoá.", "success");
       } catch (err) {
         Swal.fire("Lỗi!", err?.message || "Xoá danh mục thất bại.", "error");
+      }
+    }
+
+    if (action === "set-default") {
+      try {
+        await setDefaultWallet(id);
+        await refreshWallets();
+        window.dispatchEvent(new CustomEvent("wallets:refresh"));
+        showToast("Đã đặt ví mặc định.", "success");
+      } catch (err) {
+        showToast(err?.message || "Không đặt được ví mặc định.", "error");
       }
     }
 

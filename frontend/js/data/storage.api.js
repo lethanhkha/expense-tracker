@@ -50,6 +50,7 @@ export const deleteWallet = async (id) => {
   return true;
 };
 export const transferWallet = (data) => http.post("/wallets/transfer", data);
+export const setDefaultWallet = (id) => http.patch(`/wallets/${id}/default`);
 
 /** ===== Stats ===== */
 // export const getKPI = () => http.get("/stats/kpi");
