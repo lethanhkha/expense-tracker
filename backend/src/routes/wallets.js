@@ -20,7 +20,7 @@ async function computeWalletBalanceById(wid, session) {
       { $group: { _id: null, total: sumExpr } },
     ]).session(session),
     Tip.aggregate([
-      { $match: { walletId: wid } },
+      { $match: { walletId: wid, received: true } },
       { $group: { _id: null, total: sumExpr } },
     ]).session(session),
   ]);
@@ -33,10 +33,15 @@ async function computeWalletBalanceById(wid, session) {
 
 // GET /api/wallets
 r.get("/", async (_req, res) => {
-  const list = await Wallet.find({ archived: false }).sort({
-    isDefault: -1,
-    createdAt: 1,
-  });
+  const raw = await Wallet.find({ archived: false })
+    .sort({ isDefault: -1, createdAt: 1 })
+    .lean();
+  const list = await Promise.all(
+    raw.map(async (w) => {
+      const balance = await computeWalletBalanceById(w._id, null);
+      return { ...w, balance };
+    })
+  );
   res.json(list);
 });
 
