@@ -53,8 +53,8 @@ export const transferWallet = (data) => http.post("/wallets/transfer", data);
 export const setDefaultWallet = (id) => http.patch(`/wallets/${id}/default`);
 
 /** ===== Stats ===== */
-// export const getKPI = () => http.get("/stats/kpi");
-export const getKPI = () => http.get(`/stats/kpi?_=${Date.now()}`);
+export const getKPI = (q) =>
+  http.get(`/stats/kpi?_=${Date.now()}`, { params: q });
 
 export const updateTipReceived = (id, state) =>
   http.patch(`/tips/${id}/received`, { received: state });
@@ -77,3 +77,5 @@ export const createGoalContribution = (goalId, payload) =>
   http.post(`/goals/${goalId}/contributions`, payload);
 export const deleteGoalContribution = (goalId, contribId) =>
   http.delete(`/goals/${goalId}/contributions/${contribId}`);
+export const getGoalContributions = (goalId) =>
+  http.get(`/goals/${goalId}/contributions`);

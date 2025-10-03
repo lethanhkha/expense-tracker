@@ -6,6 +6,7 @@ import {
   deleteGoal,
   createGoalContribution,
   deleteGoalContribution,
+  getGoalContributions,
   getWallets,
 } from "../data/storage.api.js";
 // import { setupQuickAmountButtons } from "./formatAndQuickbuttons.js";
@@ -43,6 +44,18 @@ async function refreshWalletMap() {
   walletMap = Object.fromEntries(
     (wallets || []).map((w) => [String(w._id), w.name])
   );
+}
+
+function shortISO(d) {
+  try {
+    return new Date(d).toISOString().slice(0, 10);
+  } catch {
+    return String(d || "").slice(0, 10);
+  }
+}
+function signFmt(n) {
+  const v = Number(n || 0);
+  return (v >= 0 ? "+" : "") + v.toLocaleString("vi-VN");
 }
 
 function formatCurrency(n) {
@@ -85,11 +98,13 @@ async function render() {
         </div>
         <div class="bar"><span style="width:${pct}%"></span></div>
         <div class="actions right" style="gap:8px;margin-top:8px">
+          <button class="btn ghost toggle-contrib">📂 Xem </button>
           <button class="btn ghost add-contrib">➕ Góp</button>
           <button class="btn ghost withdraw-contrib">➖ Rút</button>
           <button class="btn ghost edit-goal">✏️</button>
           <button class="btn ghost del-goal">🗑️</button>
         </div>
+        <ul class="contrib-list hidden" aria-hidden="true"></ul>
       </li>
     `;
     })
@@ -170,6 +185,22 @@ export function initGoals() {
     const li = e.target.closest(".goal");
     if (!li) return;
     const id = li.dataset.id;
+
+    // Toggle hiển thị / ẩn danh sách góp
+    if (e.target.closest(".toggle-contrib")) {
+      const ul = li.querySelector(".contrib-list");
+      if (ul.classList.contains("hidden")) {
+        await renderContribList(li, id);
+        ul.classList.remove("hidden");
+        ul.setAttribute("aria-hidden", "false");
+        e.target.textContent = "📁 Ẩn góp";
+      } else {
+        ul.classList.add("hidden");
+        ul.setAttribute("aria-hidden", "true");
+        e.target.textContent = "📂 Xem góp";
+      }
+      return;
+    }
 
     if (e.target.closest(".add-contrib")) {
       await refreshWalletMap();
@@ -335,6 +366,10 @@ export function initGoals() {
         showToast("Đã ghi nhận khoản góp!");
         closeModalContrib();
         await render();
+        // tự mở danh sách góp của goal vừa góp
+        const li = els.list.querySelector(`.goal[data-id="${goalId}"]`);
+        const toggle = li?.querySelector(".toggle-contrib");
+        if (toggle) toggle.click();
         // ví & KPI đổi ngay
         window.dispatchEvent(new CustomEvent("wallets:refresh"));
         window.dispatchEvent(new CustomEvent("kpi:refresh"));
@@ -410,4 +445,47 @@ export function initGoals() {
     ?.querySelector(".btn-cancel")
     ?.addEventListener("click", closeModalWithdraw);
   render();
+}
+
+// ===== Render danh sách contributions dưới một goal =====
+async function renderContribList(goalLi, goalId) {
+  const ul = goalLi.querySelector(".contrib-list");
+  if (!ul) return;
+  ul.innerHTML = `<li class="muted">Đang tải...</li>`;
+  let list = [];
+  try {
+    list = await getGoalContributions(goalId);
+  } catch {
+    ul.innerHTML = `<li class="muted">Không tải được danh sách góp.</li>`;
+    return;
+  }
+  if (!Array.isArray(list) || list.length === 0) {
+    ul.innerHTML = `<li class="muted">Chưa có khoản góp nào.</li>`;
+    return;
+  }
+  // đảm bảo có map tên ví
+  if (!Object.keys(walletMap || {}).length) await refreshWalletMap();
+  ul.innerHTML = list
+    .map((c) => {
+      const wname = walletMap?.[String(c.walletId || "")] || "—";
+      const amt = Number(c.amount || 0);
+      const note = c.note
+        ? `<div class="muted small">${escapeHtml(c.note)}</div>`
+        : "";
+      return `
+        <li class="contrib" data-id="${c._id}">
+          <div class="row between">
+            <div class="" style="display: flex; flex-direction: column;">
+              <b>${shortISO(c.date)}</b>
+              <span class="muted">Ví: ${escapeHtml(wname)}</span>
+              ${note}
+            </div>
+            <div class="${
+              amt >= 0 ? "income-amount" : "text-danger"
+            }">${signFmt(amt)}</div>
+          </div>
+        </li>
+      `;
+    })
+    .join("");
 }
