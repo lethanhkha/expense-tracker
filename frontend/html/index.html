@@ -29,6 +29,7 @@
           </div>
           <button id="categoryButton" class="btn primary">Quản lý</button>
         </div>
+        <div id="wallet-strip" class="wallet-strip"></div>
         <nav class="nav">
           <button class="tab-btn active" data-tab="dashboard">Trang chủ</button>
           <button class="tab-btn" data-tab="income">Khoản thu</button>
@@ -39,7 +40,28 @@
         </nav>
       </aside>
       <main class="content">
+        <!-- Thanh số dư từng ví (global) -->
         <section id="dashboard" class="tab-page">
+          <!-- Dashboard Filter -->
+          <div class="filter-bar" id="dash-filter" style="">
+            <div class="">
+              <label class="muted">Tháng:</label>
+              <input type="month" id="dash-month" />
+              <span class="muted">hoặc</span>
+            </div>
+            <div class="">
+              <label class="muted">Từ:</label>
+              <input type="date" id="dash-from" />
+              <label class="muted">đến:</label>
+              <input type="date" id="dash-to" />
+            </div>
+            <div class="">
+              <label class="muted">Ví:</label>
+              <select id="dash-wallet">
+                <option value="">Tất cả ví</option>
+              </select>
+            </div>
+          </div>
           <div class="kpis">
             <div class="kpi balance">
               <div class="icon">💼</div>
@@ -78,7 +100,7 @@
               <div class="header">
                 <div class="group-title-filter-bar">
                   <div class="title">Danh sách khoản thu</div>
-                  <div class="filter-bar">
+                  <div class="filter-bar-tip">
                     <input id="income-month" type="month" />
                   </div>
                 </div>

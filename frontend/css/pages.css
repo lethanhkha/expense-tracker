@@ -545,3 +545,80 @@
     flex-direction: column;
   }
 }
+
+@media (max-width: 768px) {
+  .wallet-strip {
+    /* position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0; 
+    box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.06); */
+  }
+}
+@media (min-width: 769px) {
+  .wallet-strip {
+    position: sticky;
+    top: 0; /* Laptop/Desktop: nằm trên header từng trang */
+  }
+}
+
+/* Khung filter bar */
+#dash-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--panel-bg, #fff);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+/* Nhãn filter */
+#dash-filter label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted-fg, #666);
+  margin-right: 4px;
+}
+
+/* Ô input date/month */
+#dash-filter input[type="month"],
+#dash-filter input[type="date"] {
+  padding: 4px 8px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  background: var(--panel-bg, #fff);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* Select Wallet */
+#dash-filter select {
+  padding: 4px 8px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  background: var(--panel-bg, #fff);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* Hover / focus state */
+#dash-filter input:focus,
+#dash-filter select:focus {
+  outline: none;
+  border-color: var(--primary, #007bff);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  #dash-filter {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  #dash-filter label {
+    margin-top: 4px;
+  }
+}

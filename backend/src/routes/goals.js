@@ -16,7 +16,7 @@ async function computeWalletBalanceById(wid, session) {
   const oid = typeof wid === "string" ? new mongoose.Types.ObjectId(wid) : wid;
   const sumExpr = { $sum: { $toDouble: { $ifNull: ["$amount", 0] } } };
 
-  const [incAgg, expAgg, tipAgg] = await Promise.all([
+  const [incAgg, expAgg, tipAgg, contribAgg] = await Promise.all([
     Income.aggregate([
       { $match: { walletId: oid } },
       { $group: { _id: null, total: sumExpr } },
@@ -29,11 +29,16 @@ async function computeWalletBalanceById(wid, session) {
       { $match: { walletId: oid, received: true } },
       { $group: { _id: null, total: sumExpr } },
     ]).session(session),
+    GoalContribution.aggregate([
+      { $match: { walletId: oid } },
+      { $group: { _id: null, total: sumExpr } },
+    ]).session(session),
   ]);
   const inc = Number(incAgg?.[0]?.total || 0);
   const exp = Number(expAgg?.[0]?.total || 0);
   const tip = Number(tipAgg?.[0]?.total || 0);
-  return inc + tip - exp;
+  const contrib = Number(contribAgg?.[0]?.total || 0);
+  return inc + tip - exp - contrib;
 }
 
 /** GET /api/goals  -> trả goals + savedAmount (sum contributions) */
@@ -65,6 +70,19 @@ r.get("/", async (_req, res, next) => {
   }
 });
 
+/** GET /api/goals/:id/contributions  -> danh sách góp theo goal (mới nhất trước) */
+r.get("/:id/contributions", async (req, res, next) => {
+  try {
+    const gid = req.params.id;
+    const list = await GoalContribution.find({ goalId: gid })
+      .sort({ date: -1, createdAt: -1 })
+      .lean();
+    res.json(list || []);
+  } catch (e) {
+    next(e);
+  }
+});
+
 /** POST /api/goals */
 r.post("/", async (req, res, next) => {
   try {
@@ -75,7 +93,7 @@ r.post("/", async (req, res, next) => {
   }
 });
 
-/** POST /api/goals/:id/contributions  (tạo contribution + tạo Expense liên kết + recompute ví) */
+/** POST /api/goals/:id/contributions  (tạo contribution, recompute ví – KHÔNG tạo Expense) */
 r.post("/:id/contributions", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -91,24 +109,7 @@ r.post("/:id/contributions", async (req, res) => {
       return res.status(400).json({ message: "Thiếu walletId" });
     }
 
-    // 1) tạo Expense đặc biệt (để pipeline hiện tại tự trừ ví & vào KPI)
-    const [exp] = await Expense.create(
-      [
-        {
-          source: `Góp mục tiêu: ${goal.name}`,
-          amount,
-          date: date || new Date(),
-          note: note || `Góp mục tiêu: ${goal.name}`,
-          walletId,
-          categoryId: null, // tuỳ bạn có muốn gán một category "Goal"
-          isGoalContribution: true,
-          goalId: goal._id,
-        },
-      ],
-      { session }
-    );
-
-    // 2) tạo Contribution
+    // 1) tạo Contribution
     const [contrib] = await GoalContribution.create(
       [
         {
@@ -117,18 +118,17 @@ r.post("/:id/contributions", async (req, res) => {
           walletId,
           date: date || new Date(),
           note,
-          expenseId: exp._id,
         },
       ],
       { session }
     );
 
-    // 3) recompute ví
+    // 2) Recompute số dư ví (có tính cả Contribution)
     const bal = await computeWalletBalanceById(walletId, session);
     await Wallet.findByIdAndUpdate(walletId, { balance: bal }, { session });
 
     await session.commitTransaction();
-    res.status(201).json({ contribution: contrib, expense: exp });
+    res.status(201).json({ contribution: contrib });
   } catch (e) {
     await session.abortTransaction();
     res.status(400).json({ message: e.message });

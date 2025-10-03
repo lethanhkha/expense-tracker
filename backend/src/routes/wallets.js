@@ -187,6 +187,37 @@ r.post("/transfer", async (req, res) => {
   }
 });
 
+// PATCH /api/wallets/:id/default  -> đặt ví mặc định (duy nhất)
+r.patch("/:id/default", async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const target = await Wallet.findById(req.params.id).session(session);
+    if (!target || target.archived) {
+      await session.abortTransaction();
+      return res.status(404).json({ message: "Không tìm thấy ví." });
+    }
+    // bỏ mặc định các ví khác
+    await Wallet.updateMany(
+      { _id: { $ne: target._id }, archived: false, isDefault: true },
+      { $set: { isDefault: false } },
+      { session }
+    );
+    // đặt mặc định cho ví đích
+    target.isDefault = true;
+    await target.save({ session });
+
+    await session.commitTransaction();
+    const fresh = await Wallet.findById(target._id).lean();
+    res.json(fresh);
+  } catch (e) {
+    await session.abortTransaction();
+    res.status(400).json({ message: e.message });
+  } finally {
+    session.endSession();
+  }
+});
+
 // PATCH /api/wallets/:id
 r.patch("/:id", async (req, res) => {
   try {
