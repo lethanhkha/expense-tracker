@@ -94,6 +94,7 @@ async function renderTips() {
   list.innerHTML = Object.entries(grouped)
     .map(([day, items]) => {
       const allChecked = items.every((t) => t.received);
+      const daySum = items.reduce((s, i) => s + Number(i.amount || 0), 0);
       return `
         <li class="tip-day" data-day="${day}">
           <div class="tip-day-header">
@@ -101,6 +102,9 @@ async function renderTips() {
               allChecked ? "checked" : ""
             } data-day="${day}" />
             <span class="day-label">${formatDateDisplayTip(day)}</span>
+            <span class="day-total muted" style="margin-left:8px;">Tổng: +${formatCurrency(
+              daySum
+            )}</span>
           </div>
           <ul class="tip-day-list">
             ${items
