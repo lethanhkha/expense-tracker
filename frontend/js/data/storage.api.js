@@ -1,7 +1,8 @@
 import { http } from "./http.js";
 
 /** ===== Incomes ===== */
-export const getIncomes = () => http.get("/incomes");
+// export const getIncomes = () => http.get("/incomes");
+export const getIncomes = (q) => http.get("/incomes", { params: q });
 export const createIncome = (data) => http.post("/incomes", data);
 export const updateIncome = (id, data) => http.patch(`/incomes/${id}`, data);
 export const deleteIncome = async (id) => {
@@ -10,7 +11,8 @@ export const deleteIncome = async (id) => {
 };
 
 /** ===== Expenses ===== */
-export const getExpenses = () => http.get("/expenses");
+// export const getExpenses = () => http.get("/expenses");
+export const getExpenses = (q) => http.get("/expenses", { params: q });
 export const createExpense = (data) => http.post("/expenses", data);
 export const updateExpense = (id, data) => http.patch(`/expenses/${id}`, data);
 export const deleteExpense = async (id) => {
@@ -19,7 +21,8 @@ export const deleteExpense = async (id) => {
 };
 
 /** ===== Tips ===== */
-export const getTips = () => http.get("/tips");
+// export const getTips = () => http.get("/tips");
+export const getTips = (q) => http.get("/tips", { params: q });
 export const createTip = (data) => http.post("/tips", data);
 export const updateTip = (id, data) => http.patch(`/tips/${id}`, data);
 export const deleteTip = async (id) => {

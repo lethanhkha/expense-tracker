@@ -16,6 +16,7 @@ import {
   setupQuickAmountButtons,
   ensureDefaultDate,
   escapeHtml,
+  currentMonthRangeISO,
 } from "../modules/formatAndQuickbuttons.js";
 
 import { wireModal } from "../modules/modal.js";
@@ -44,6 +45,7 @@ export function initExpense({ onChanged }) {
   const walletSelect = document.getElementById("expense-wallet");
 
   const listEl = document.getElementById("expense-list");
+  const monthInput = document.getElementById("expense-month");
   let currentExpenses = [];
   const expenseModal = modal ? wireModal(modal) : null;
 
@@ -217,11 +219,46 @@ export function initExpense({ onChanged }) {
     }
   });
 
+  function ensureMonthDefault() {
+    if (!monthInput) return;
+    if (!monthInput.value) {
+      const now = new Date();
+      monthInput.value =
+        String(now.getFullYear()) +
+        "-" +
+        String(now.getMonth() + 1).padStart(2, "0");
+    }
+  }
+
+  function monthRangeFromValue(val) {
+    let y, m;
+    if (val && /^\d{4}-\d{2}$/.test(val)) {
+      const [yy, mm] = val.split("-").map((s) => parseInt(s, 10));
+      y = yy;
+      m = mm - 1;
+    } else {
+      const d = new Date();
+      y = d.getFullYear();
+      m = d.getMonth();
+    }
+    const from = new Date(y, m, 1);
+    const to = new Date(y, m + 1, 0);
+    const pad = (n) => String(n).padStart(2, "0");
+    return {
+      from: `${from.getFullYear()}-${pad(from.getMonth() + 1)}-${pad(
+        from.getDate()
+      )}`,
+      to: `${to.getFullYear()}-${pad(to.getMonth() + 1)}-${pad(to.getDate())}`,
+    };
+  }
+
   async function renderExpenses() {
     if (!listEl) return;
+    ensureMonthDefault();
     let expenses = [];
     try {
-      expenses = await getExpenses();
+      const { from, to } = monthRangeFromValue(monthInput?.value);
+      expenses = await getExpenses({ from, to });
     } catch (err) {
       listEl.innerHTML = `<li class="muted" style="padding:8px 0;">Không tải được danh sách chi tiêu: ${err?.message}.</li>`;
       return;
@@ -352,5 +389,69 @@ export function initExpense({ onChanged }) {
     }
   });
 
+  monthInput?.addEventListener("change", () => renderExpenses());
+
   return { renderExpenses };
 }
+
+// === Xuất CSV (Chi - ALL fields) ===
+(function setupExpenseExportCSV_All() {
+  function normalize(val) {
+    if (val === null || val === undefined) return "";
+    if (typeof val === "object") return JSON.stringify(val);
+    return String(val);
+  }
+  function escCSV(s) {
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  function toCSVAll(rows) {
+    if (!rows.length) return "";
+    const keys = Array.from(
+      rows.reduce((set, r) => {
+        Object.keys(r || {}).forEach((k) => set.add(k));
+        return set;
+      }, new Set())
+    );
+    const head = keys.map((k) => escCSV(k)).join(";");
+    const body = rows
+      .map((r) => keys.map((k) => escCSV(normalize(r?.[k]))).join(";"))
+      .join("\n");
+    return head + "\n" + body;
+  }
+
+  async function fetchExpensesAll() {
+    const data = await getExpenses(); // Trả về mảng Expense trực tiếp
+    return Array.isArray(data) ? data : [];
+  }
+
+  async function exportCSVAll() {
+    try {
+      const list = await fetchExpensesAll();
+      if (!list.length) {
+        alert("Không có dữ liệu Chi để xuất.");
+        return;
+      }
+      const csv = toCSVAll(list);
+      const ts = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "");
+      const blob = new Blob([`\uFEFF${csv}`], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `expenses-${ts}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      alert("Xuất CSV (Chi) thất bại.");
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const btn = document.querySelector("#btn-export-expense");
+    if (btn) btn.addEventListener("click", exportCSVAll);
+  });
+})();

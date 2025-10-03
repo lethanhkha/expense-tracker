@@ -16,7 +16,7 @@ import {
   setupQuickAmountButtons,
   ensureDefaultDate,
   escapeHtml,
-  formatDateTimeVN,
+  // formatDateTimeVN,
 } from "../modules/formatAndQuickbuttons.js";
 
 import { wireModal } from "../modules/modal.js";
@@ -50,6 +50,8 @@ export function initIncome({ onChanged }) {
   const presetSelect = document.getElementById("income-preset");
   const walletSelect = document.getElementById("income-wallet");
   const listEl = document.getElementById("income-list");
+  const monthInput = document.getElementById("income-month");
+
   let currentIncomes = [];
 
   const incomeModal = modal ? wireModal(modal) : null;
@@ -218,11 +220,48 @@ export function initIncome({ onChanged }) {
     }
   });
 
+  // Set default yyyy-mm nếu trống
+  function ensureMonthDefault() {
+    if (!monthInput) return;
+    if (!monthInput.value) {
+      const now = new Date();
+      monthInput.value =
+        String(now.getFullYear()) +
+        "-" +
+        String(now.getMonth() + 1).padStart(2, "0");
+    }
+  }
+
+  function monthRangeFromValue(val) {
+    // val: "yyyy-mm" | null
+    let y, m;
+    if (val && /^\d{4}-\d{2}$/.test(val)) {
+      const [yy, mm] = val.split("-").map((s) => parseInt(s, 10));
+      y = yy;
+      m = mm - 1;
+    } else {
+      const d = new Date();
+      y = d.getFullYear();
+      m = d.getMonth();
+    }
+    const from = new Date(y, m, 1);
+    const to = new Date(y, m + 1, 0);
+    const pad = (n) => String(n).padStart(2, "0");
+    return {
+      from: `${from.getFullYear()}-${pad(from.getMonth() + 1)}-${pad(
+        from.getDate()
+      )}`,
+      to: `${to.getFullYear()}-${pad(to.getMonth() + 1)}-${pad(to.getDate())}`,
+    };
+  }
+
   async function renderIncomes() {
     if (!listEl) return;
+    ensureMonthDefault();
     let incomes = [];
     try {
-      incomes = await getIncomes();
+      const { from, to } = monthRangeFromValue(monthInput?.value);
+      incomes = await getIncomes({ from, to });
     } catch (err) {
       listEl.innerHTML = `<li class="muted" style="padding:8px 0;">Không tải được danh sách thu nhập: ${
         err?.message || "lỗi mạng/ máy chủ"
@@ -368,7 +407,86 @@ export function initIncome({ onChanged }) {
     }
   });
 
+  monthInput?.addEventListener("change", () => renderIncomes());
+
   renderIncomes();
 
   return { renderIncomes };
 }
+
+function buildCommonParams() {
+  // Tự động đọc filter nếu trang đang có (không có thì bỏ qua)
+  const from = document.querySelector("#filter-from")?.value || "";
+  const to = document.querySelector("#filter-to")?.value || "";
+  const walletId = document.querySelector("#filter-wallet")?.value || "";
+  const categoryId = document.querySelector("#filter-category")?.value || "";
+  const params = {};
+  if (from) params.from = from;
+  if (to) params.to = to;
+  if (walletId) params.walletId = walletId;
+  if (categoryId) params.categoryId = categoryId;
+  return params;
+}
+
+// === Xuất CSV (Thu - ALL fields) ===
+(function setupIncomeExportCSV() {
+  function normalize(val) {
+    if (val === null || val === undefined) return "";
+    if (typeof val === "object") return JSON.stringify(val);
+    return String(val);
+  }
+  function escCSV(s) {
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  function toCSVAll(rows) {
+    if (!rows.length) return "";
+    // Lấy UNION tất cả key xuất hiện trong mảng rows
+    const keys = Array.from(
+      rows.reduce((set, r) => {
+        Object.keys(r || {}).forEach((k) => set.add(k));
+        return set;
+      }, new Set())
+    );
+    const head = keys.map((k) => escCSV(k)).join(";");
+    const body = rows
+      .map((r) => keys.map((k) => escCSV(normalize(r?.[k]))).join(";"))
+      .join("\n");
+    return head + "\n" + body;
+  }
+
+  async function fetchIncomesAll() {
+    const data = await getIncomes(); // Trả về mảng Income trực tiếp
+    return Array.isArray(data) ? data : [];
+  }
+
+  async function exportCSVAll() {
+    try {
+      const list = await fetchIncomesAll();
+      if (!list.length) {
+        alert("Không có dữ liệu Thu để xuất.");
+        return;
+      }
+      const csv = toCSVAll(list);
+      const ts = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "");
+      const blob = new Blob([`\uFEFF${csv}`], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `incomes-${ts}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      alert("Xuất CSV (Thu) thất bại.");
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const btn = document.querySelector("#btn-export-income");
+    if (btn) btn.addEventListener("click", exportCSVAll);
+  });
+})();
