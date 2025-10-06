@@ -5,36 +5,50 @@ import Income from "../models/Income.js";
 import Expense from "../models/Expense.js";
 import Tip from "../models/Tip.js";
 import GoalContribution from "../models/GoalContribution.js";
+import Transfer from "../models/Transfer.js";
 
 const r = express.Router();
 const sumExpr = { $sum: { $toDouble: { $ifNull: ["$amount", 0] } } };
 
 // Hàm tính lại balance cho 1 ví
 async function computeWalletBalanceById(wid, session) {
-  const [incAgg, expAgg, tipAgg, contribAgg] = await Promise.all([
-    Income.aggregate([
-      { $match: { walletId: wid } },
-      { $group: { _id: null, total: sumExpr } },
-    ]).session(session),
-    Expense.aggregate([
-      { $match: { walletId: wid } },
-      { $group: { _id: null, total: sumExpr } },
-    ]).session(session),
-    Tip.aggregate([
-      { $match: { walletId: wid, received: true } },
-      { $group: { _id: null, total: sumExpr } },
-    ]).session(session),
-    GoalContribution.aggregate([
-      { $match: { walletId: wid } },
-      { $group: { _id: null, total: sumExpr } },
-    ]).session(session),
-  ]);
+  const [incAgg, expAgg, tipAgg, contribAgg, tfOutAgg, tfInAgg] =
+    await Promise.all([
+      Income.aggregate([
+        { $match: { walletId: wid } },
+        { $group: { _id: null, total: sumExpr } },
+      ]).session(session),
+      Expense.aggregate([
+        { $match: { walletId: wid } },
+        { $group: { _id: null, total: sumExpr } },
+      ]).session(session),
+      Tip.aggregate([
+        { $match: { walletId: wid, received: true } },
+        { $group: { _id: null, total: sumExpr } },
+      ]).session(session),
+      GoalContribution.aggregate([
+        { $match: { walletId: wid } },
+        { $group: { _id: null, total: sumExpr } },
+      ]).session(session),
+      // chuyển đi
+      Transfer.aggregate([
+        { $match: { fromWalletId: wid } },
+        { $group: { _id: null, total: sumExpr } },
+      ]).session(session),
+      // chuyển đến
+      Transfer.aggregate([
+        { $match: { toWalletId: wid } },
+        { $group: { _id: null, total: sumExpr } },
+      ]).session(session),
+    ]);
 
   const sumIncome = Number(incAgg?.[0]?.total || 0);
   const sumExpense = Number(expAgg?.[0]?.total || 0);
   const sumTip = Number(tipAgg?.[0]?.total || 0);
   const sumContrib = Number(contribAgg?.[0]?.total || 0);
-  return sumIncome + sumTip - sumExpense - sumContrib;
+  const sumTfOut = Number(tfOutAgg?.[0]?.total || 0);
+  const sumTfIn = Number(tfInAgg?.[0]?.total || 0);
+  return sumIncome + sumTip - sumExpense - sumContrib - sumTfOut + sumTfIn;
 }
 
 // GET /api/wallets
@@ -53,6 +67,7 @@ r.get("/", async (_req, res) => {
 
 r.post("/", async (req, res) => {
   const session = await mongoose.startSession();
+  let { fromWalletId, toWalletId, amount, note, date } = req.body || {};
   session.startTransaction();
   try {
     // CHỈ ĐẾM VÍ ACTIVE
@@ -150,44 +165,135 @@ r.post("/recompute", async (_req, res) => {
   }
 });
 
-// OPTIONAL: chuyển tiền giữa ví
-r.post("/transfer", async (req, res) => {
-  const { fromWalletId, toWalletId, amount, note, date } = req.body || {};
-  const amt = Number(amount);
+// r.post("/transfer", async (req, res) => {
+//   const { fromWalletId, toWalletId, amount, note, date } = req.body || {};
+//   const amt = Number(amount);
 
-  if (!fromWalletId || !toWalletId || !amt)
-    return res.status(400).json({ message: "Thiếu tham số." });
-  if (fromWalletId === toWalletId)
-    return res.status(400).json({ message: "Hai ví phải khác nhau." });
-  if (amt <= 0) return res.status(400).json({ message: "Số tiền phải > 0." });
+//   if (!fromWalletId || !toWalletId || !amt)
+//     return res.status(400).json({ message: "Thiếu tham số." });
+//   if (fromWalletId === toWalletId)
+//     return res.status(400).json({ message: "Hai ví phải khác nhau." });
+//   if (amt <= 0) return res.status(400).json({ message: "Số tiền phải > 0." });
+
+//   const session = await mongoose.startSession();
+//   try {
+//     session.startTransaction();
+
+//     const from = await Wallet.findById(fromWalletId).session(session);
+//     const to = await Wallet.findById(toWalletId).session(session);
+
+//     if (!from || !to) {
+//       await session.abortTransaction();
+//       return res.status(404).json({ message: "Không tìm thấy ví." });
+//     }
+//     if ((from.balance ?? 0) < amt) {
+//       await session.abortTransaction();
+//       return res.status(400).json({ message: "Số dư ví nguồn không đủ." });
+//     }
+
+//     // from.balance = (from.balance ?? 0) - amt;
+//     // to.balance = (to.balance ?? 0) + amt;
+//     // await from.save({ session });
+//     // await to.save({ session });
+
+//     // Chuẩn hóa date nếu là yyyy-mm-dd
+//     if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+//       date = new Date(date + "T00:00:00.000Z");
+//     }
+//     // 1) Lưu lịch sử chuyển
+//     await Transfer.create(
+//       [
+//         {
+//           fromWalletId,
+//           toWalletId,
+//           amount: amt,
+//           note: note ?? "",
+//           date: date || new Date(),
+//         },
+//       ],
+//       { session }
+//     );
+
+//     // 2) Recompute cả 2 ví theo công thức chuẩn
+//     const balFrom = await computeWalletBalanceById(fromWalletId, session);
+//     const balTo = await computeWalletBalanceById(toWalletId, session);
+//     await Wallet.findByIdAndUpdate(
+//       fromWalletId,
+//       { balance: balFrom },
+//       { session }
+//     );
+//     await Wallet.findByIdAndUpdate(toWalletId, { balance: balTo }, { session });
+
+//     await session.commitTransaction();
+//     res.status(201).json({ ok: true });
+//   } catch (err) {
+//     await session.abortTransaction();
+//     console.error(err);
+//     res.status(500).json({ message: "Lỗi chuyển tiền." });
+//   } finally {
+//     session.endSession();
+//   }
+// });
+
+// POST /api/wallets/transfer
+r.post("/transfer", async (req, res) => {
+  let { fromWalletId, toWalletId, amount, note, date } = req.body || {};
+
+  // Validate cơ bản
+  if (!fromWalletId || !toWalletId) {
+    return res
+      .status(400)
+      .json({ message: "Thiếu fromWalletId hoặc toWalletId" });
+  }
+  if (String(fromWalletId) === String(toWalletId)) {
+    return res.status(400).json({ message: "Hai ví phải khác nhau" });
+  }
+  const amt = Number(amount);
+  if (!amt || amt <= 0) {
+    return res.status(400).json({ message: "Số tiền phải > 0" });
+  }
+  // Chuẩn hóa date nếu client gửi yyyy-mm-dd
+  if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    date = new Date(date + "T00:00:00.000Z");
+  }
 
   const session = await mongoose.startSession();
+  session.startTransaction();
   try {
-    session.startTransaction();
-
     const from = await Wallet.findById(fromWalletId).session(session);
     const to = await Wallet.findById(toWalletId).session(session);
+    if (!from || from.archived) throw new Error("Ví nguồn không tồn tại");
+    if (!to || to.archived) throw new Error("Ví đích không tồn tại");
 
-    if (!from || !to) {
-      await session.abortTransaction();
-      return res.status(404).json({ message: "Không tìm thấy ví." });
-    }
-    if ((from.balance ?? 0) < amt) {
-      await session.abortTransaction();
-      return res.status(400).json({ message: "Số dư ví nguồn không đủ." });
-    }
+    // (tuỳ bạn) kiểm tra số dư
+    const fromBal = await computeWalletBalanceById(from._id, session);
+    if (fromBal < amt) throw new Error("Số dư ví nguồn không đủ");
 
-    from.balance = (from.balance ?? 0) - amt;
-    to.balance = (to.balance ?? 0) + amt;
-    await from.save({ session });
-    await to.save({ session });
+    // 1) Lưu lịch sử chuyển
+    await Transfer.create(
+      [
+        {
+          fromWalletId: from._id,
+          toWalletId: to._id,
+          amount: amt,
+          note: note || "",
+          date: date || new Date(),
+        },
+      ],
+      { session }
+    );
+
+    // 2) Recompute cả 2 ví theo công thức chuẩn
+    const balFrom = await computeWalletBalanceById(from._id, session);
+    const balTo = await computeWalletBalanceById(to._id, session);
+    await Wallet.findByIdAndUpdate(from._id, { balance: balFrom }, { session });
+    await Wallet.findByIdAndUpdate(to._id, { balance: balTo }, { session });
 
     await session.commitTransaction();
     res.status(201).json({ ok: true });
-  } catch (err) {
+  } catch (e) {
     await session.abortTransaction();
-    console.error(err);
-    res.status(500).json({ message: "Lỗi chuyển tiền." });
+    res.status(400).json({ message: e.message || "Lỗi chuyển tiền" });
   } finally {
     session.endSession();
   }

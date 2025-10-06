@@ -519,6 +519,69 @@
             </div>
           </div>
         </div>
+        <!-- Modal: Chuyển tiền giữa ví -->
+        <div id="modal-transfer" class="modal">
+          <div class="dialog">
+            <div class="inner">
+              <div class="header">
+                <div class="title">Chuyển tiền giữa ví</div>
+                <button
+                  type="button"
+                  class="btn ghost"
+                  id="tf-close"
+                  title="Đóng"
+                  aria-label="Đóng"
+                  data-close
+                >
+                  ✕
+                </button>
+              </div>
+              <form id="tf-form" class="form" autocomplete="off">
+                <div class="field">
+                  <label for="tf-from">Từ ví</label>
+                  <select id="tf-from" class="input"></select>
+                </div>
+                <div class="field">
+                  <label for="tf-to">Đến ví</label>
+                  <select id="tf-to" class="input"></select>
+                </div>
+                <div class="field">
+                  <label for="tf-amount">Số tiền</label>
+                  <input
+                    id="tf-amount"
+                    class="input"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label for="tf-date">Ngày</label>
+                  <input id="tf-date" class="input" type="date" />
+                </div>
+                <div class="field">
+                  <label for="tf-note">Ghi chú (tuỳ chọn)</label>
+                  <input
+                    id="tf-note"
+                    class="input"
+                    type="text"
+                    placeholder="Nội dung chuyển..."
+                  />
+                </div>
+                <div class="actions">
+                  <button type="button" class="btn ghost" id="tf-cancel">
+                    Huỷ
+                  </button>
+                  <button type="submit" class="btn primary" id="tf-submit">
+                    Chuyển
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
         <!-- Modal thêm/sửa Debt (dùng modal.css hiện tại) -->
         <div class="modal" id="modal-debt">
           <div class="dialog">
@@ -543,7 +606,7 @@
                     name="amount"
                     type="number"
                     min="0"
-                    step="1000"
+                    step="0.01"
                     class="input"
                     placeholder="0"
                     required
@@ -581,7 +644,7 @@
                     name="targetAmount"
                     type="number"
                     min="0"
-                    step="1000"
+                    step="0.01"
                     class="input"
                     required
                   />
@@ -618,7 +681,7 @@
                     name="amount"
                     type="number"
                     min="0"
-                    step="1000"
+                    step="0.01"
                     class="input"
                     required
                   />
@@ -660,7 +723,7 @@
                     name="amount"
                     type="number"
                     min="0"
-                    step="1000"
+                    step="0.01"
                     class="input"
                     required
                   />

@@ -12,6 +12,7 @@ import {
   updateWallet,
   deleteWallet,
   setDefaultWallet,
+  transferWallet,
 } from "../data/storage.api.js";
 
 import { showToast } from "../modules/toast.js";
@@ -47,9 +48,149 @@ export function initCategories() {
   const btnWalletAdd = document.getElementById("btn-wallet-add");
   const btnWalletBack = document.getElementById("btn-wallet-back");
 
+  const btnOpenTransfer = document.getElementById("open-transfer");
+  // Modal chuyển tiền
+  const modalTransfer = document.getElementById("modal-transfer");
+  const transferModal = modalTransfer ? wireModal(modalTransfer) : null;
+  const tfForm = document.getElementById("tf-form");
+  const tfFrom = document.getElementById("tf-from");
+  const tfClose = document.getElementById("tf-close");
+  const tfCancel = document.getElementById("tf-cancel");
+  const tfTo = document.getElementById("tf-to");
+  const tfAmount = document.getElementById("tf-amount");
+  const tfDate = document.getElementById("tf-date");
+  const tfNote = document.getElementById("tf-note");
+
   let currentIncome = [];
   let currentExpense = [];
   let currentWallets = [];
+
+  // ===== Transfer money between wallets (Modal) =====
+  function openTransferModal() {
+    transferModal?.open();
+  }
+  function closeTransferModal() {
+    // 1) blur phần tử đang focus trong modal để tránh aria-hidden warning
+    if (modalTransfer && modalTransfer.contains(document.activeElement)) {
+      try {
+        document.activeElement?.blur();
+      } catch {}
+    }
+    // 2) đóng modal chuyển
+    transferModal?.close();
+    tfForm?.reset();
+    // 3) quay lại modal danh mục ở tab Ví (list mode)
+    switchTab("cat-wallets");
+    modal.dataset.mode = "list";
+    // 4) đưa focus về nút mở "Chuyển tiền" để tiếp tục thao tác
+    setTimeout(() => {
+      btnOpenTransfer?.focus?.();
+    }, 0);
+  }
+
+  async function populateTransferFields() {
+    await refreshWallets();
+    if (!Array.isArray(currentWallets) || currentWallets.length < 2) {
+      showToast("Cần ít nhất 2 ví để chuyển tiền.", "info");
+      return false;
+    }
+    // options
+    const opts = currentWallets
+      .map(
+        (w) =>
+          `<option value="${w._id}">${escapeHtml(w.name)} — ${formatCurrency(
+            +w.balance || 0
+          )} ${escapeHtml(w.currency || "VND")}</option>`
+      )
+      .join("");
+    tfFrom.innerHTML = opts;
+    tfTo.innerHTML = opts;
+    // defaults: from = ví mặc định, to = ví khác đầu tiên
+    const def = currentWallets.find((w) => w.isDefault) || currentWallets[0];
+    const other =
+      currentWallets.find((w) => String(w._id) !== String(def._id)) ||
+      currentWallets[1];
+    if (def) tfFrom.value = String(def._id);
+    if (other) tfTo.value = String(other._id);
+    // prefll date = today
+    const d = new Date(),
+      pad = (n) => String(n).padStart(2, "0");
+    tfDate.value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
+      d.getDate()
+    )}`;
+    // focus amount
+    tfAmount.focus();
+    return true;
+  }
+
+  btnOpenTransfer?.addEventListener("click", async () => {
+    const ok = await populateTransferFields();
+    if (ok) openTransferModal();
+  });
+
+  // đảm bảo nút Close/Huỷ cũng dùng closeTransferModal (ngoài data-close)
+  tfClose?.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeTransferModal();
+  });
+  tfCancel?.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeTransferModal();
+  });
+
+  // tránh chọn cùng 1 ví
+  function ensureDifferentWallets() {
+    if (!tfFrom || !tfTo) return;
+    if (tfFrom.value && tfTo.value && tfFrom.value === tfTo.value) {
+      // đổi to sang ví khác nếu trùng
+      const alt = Array.from(tfTo.options).find(
+        (o) => o.value !== tfFrom.value
+      );
+      if (alt) tfTo.value = alt.value;
+    }
+  }
+  tfFrom?.addEventListener("change", ensureDifferentWallets);
+  tfTo?.addEventListener("change", ensureDifferentWallets);
+
+  // Submit chuyển tiền
+  tfForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fromWalletId = tfFrom?.value;
+    const toWalletId = tfTo?.value;
+    const amount = Number(tfAmount?.value || 0);
+    const date = tfDate?.value || undefined;
+    const note = tfNote?.value || "";
+
+    if (!fromWalletId || !toWalletId) {
+      showToast("Vui lòng chọn đủ 2 ví.", "error");
+      return;
+    }
+    if (fromWalletId === toWalletId) {
+      showToast("Hai ví phải khác nhau.", "error");
+      return;
+    }
+    if (!amount || amount <= 0) {
+      showToast("Số tiền phải > 0.", "error");
+      return;
+    }
+    // check số dư (client)
+    const fromW = currentWallets.find(
+      (w) => String(w._id) === String(fromWalletId)
+    );
+    if (fromW && Number(fromW.balance || 0) < amount) {
+      showToast("Số dư ví nguồn không đủ.", "error");
+      return;
+    }
+    try {
+      await transferWallet({ fromWalletId, toWalletId, amount, date, note });
+      showToast("Đã chuyển tiền giữa các ví.", "success");
+      closeTransferModal();
+      await refreshWallets();
+      window.dispatchEvent(new CustomEvent("wallets:refresh"));
+    } catch (err) {
+      showToast(err?.message || "Lỗi chuyển tiền.", "error");
+    }
+  });
 
   // ===== Helpers =====
   function switchTab(id) {
