@@ -1,16 +1,17 @@
 import express from "express";
-import mongoose from "mongoose";
 import Wallet from "../models/Wallet.js";
+import mongoose from "mongoose";
 import Income from "../models/Income.js";
 import Expense from "../models/Expense.js";
 import Tip from "../models/Tip.js";
+import GoalContribution from "../models/GoalContribution.js";
 
 const r = express.Router();
 const sumExpr = { $sum: { $toDouble: { $ifNull: ["$amount", 0] } } };
 
 // Hàm tính lại balance cho 1 ví
 async function computeWalletBalanceById(wid, session) {
-  const [incAgg, expAgg, tipAgg] = await Promise.all([
+  const [incAgg, expAgg, tipAgg, contribAgg] = await Promise.all([
     Income.aggregate([
       { $match: { walletId: wid } },
       { $group: { _id: null, total: sumExpr } },
@@ -23,12 +24,17 @@ async function computeWalletBalanceById(wid, session) {
       { $match: { walletId: wid, received: true } },
       { $group: { _id: null, total: sumExpr } },
     ]).session(session),
+    GoalContribution.aggregate([
+      { $match: { walletId: wid } },
+      { $group: { _id: null, total: sumExpr } },
+    ]).session(session),
   ]);
 
   const sumIncome = Number(incAgg?.[0]?.total || 0);
   const sumExpense = Number(expAgg?.[0]?.total || 0);
   const sumTip = Number(tipAgg?.[0]?.total || 0);
-  return sumIncome + sumTip - sumExpense;
+  const sumContrib = Number(contribAgg?.[0]?.total || 0);
+  return sumIncome + sumTip - sumExpense - sumContrib;
 }
 
 // GET /api/wallets

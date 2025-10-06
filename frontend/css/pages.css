@@ -1,17 +1,31 @@
 /* ==================== Sidebar ==================== */
-
+/* 
 .sidebar {
+  width: 30%;
   position: sticky;
-  top: var(
-    --topbar-h,
-    0px
-  ); /* nếu có thanh topbar, set biến này; không có thì =0 */
-  align-self: start; /* quan trọng: để sticky hoạt động trong grid/flex */
+  top: var(--topbar-h, 0px);
+  align-self: start;
   height: calc(100vh - var(--topbar-h, 0px));
-  overflow: auto; /* nếu nội dung sidebar dài thì chỉ sidebar tự cuộn */
-  border-right: 1px solid #ececf3; /* trang trí (tuỳ) */
-  background: #fff; /* đảm bảo không trong suốt khi trượt */
-  z-index: 1; /* trên nền nội dung */
+  overflow: auto;
+  border-right: 1px solid #ececf3;
+  background: #fff;
+  z-index: 1;
+} */
+
+/* Thay thế block .sidebar ở trên nếu bạn thích theo viewport */
+.sidebar {
+  flex: 0 0 25vw; /* ~32% viewport */
+  max-width: 35vw;
+  min-width: 30vw;
+  min-inline-size: 0;
+  overflow-x: hidden;
+  position: sticky; /* giữ các thuộc tính sẵn có của bạn */
+  top: var(--topbar-h, 0px);
+  height: calc(100vh - var(--topbar-h, 0px));
+  overflow-y: auto;
+  background: #fff;
+  border-right: 1px solid #ececf3;
+  z-index: 1;
 }
 
 /* User Profile */
@@ -72,7 +86,8 @@
 
 .content {
   padding: 28px;
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 /* Dashboard */
