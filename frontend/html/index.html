@@ -420,8 +420,10 @@
                   <ul id="cat-expense-list" class="cat-list"></ul>
                 </div>
                 <div id="cat-wallets" class="cat-page hidden">
+                  <button id="open-transfer" class="btn btn-transfer">
+                    Chuyển tiền
+                  </button>
                   <ul id="wallets-list" class="cat-list"></ul>
-                  <button id="open-transfer" class="btn">Chuyển tiền</button>
                 </div>
               </div>
 
@@ -621,6 +623,45 @@
                     Huỷ
                   </button>
                   <button type="submit" class="btn primary">Lưu</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <!-- Modal: Góp nợ -->
+        <div class="modal" id="modal-debt-contrib">
+          <div class="dialog">
+            <div class="inner">
+              <div class="header">
+                <div class="title" id="debt-contrib-modal-title">Góp nợ</div>
+                <button class="btn ghost" data-close>✕</button>
+              </div>
+              <form id="debt-contrib-form" class="form">
+                <div class="field">
+                  <label>Số tiền</label>
+                  <input
+                    name="amount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    class="input"
+                    placeholder="0"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label>Ngày</label>
+                  <input name="date" type="date" class="input" />
+                </div>
+                <div class="field">
+                  <label>Ghi chú</label>
+                  <textarea name="note" class="input" rows="2"></textarea>
+                </div>
+                <div class="actions">
+                  <button type="button" class="btn ghost" data-close>
+                    Đóng
+                  </button>
+                  <button type="submit" class="btn primary">Góp</button>
                 </div>
               </form>
             </div>

@@ -86,7 +86,7 @@
 }
 
 /* Modal */
-.modal {
+/* .modal {
   position: fixed;
   inset: 0;
   background: rgba(15, 18, 40, 0.24);
@@ -98,12 +98,42 @@
 
 .modal.show {
   display: grid;
+} */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  display: grid; /* luôn layout nhưng ẩn bằng visibility */
+  place-items: center;
+  padding: 18px;
+  z-index: 1000;
+  background: rgba(15, 18, 40, 0.24);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.22s ease, visibility 0.22s ease,
+    background-color 0.22s ease;
+}
+.modal.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  background: rgba(15, 18, 40, 0.32); /* hơi đậm hơn khi mở */
 }
 
 /* Giới hạn chiều cao form trong modal và cho phép scroll */
 /* .modal .dialog .inner {
   max-height: 85vh; 
   overflow-y: auto; 
+} */
+
+/* .modal .dialog {
+  width: min(640px, 92vw);
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 18px 80px rgba(15, 18, 40, 0.25);
+  display: flex;
+  height: 76vh;
 } */
 
 .modal .dialog {
@@ -113,7 +143,13 @@
   box-shadow: 0 18px 80px rgba(15, 18, 40, 0.25);
   display: flex; /* để .inner giãn full */
   height: 76vh;
-  /* overflow-y: auto; */
+  transform: translateY(12px) scale(0.985);
+  opacity: 0;
+  transition: transform 0.22s ease, opacity 0.22s ease;
+}
+.modal.show .dialog {
+  transform: translateY(0) scale(1);
+  opacity: 1;
 }
 
 /* Nếu muốn áp dụng riêng cho form: */
@@ -219,7 +255,7 @@
   padding: 12px 16px;
   border-radius: 8px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
-  animation: fadeIn 0.3s ease, fadeOut 0.3s ease 3s forwards;
+  animation: fadeIn 0.28s ease, fadeOut 0.28s ease 3.2s forwards;
 }
 
 .toast.success {
