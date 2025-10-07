@@ -66,6 +66,14 @@ export const createDebt = (payload) => http.post("/debts", payload);
 export const updateDebt = (id, payload) => http.patch(`/debts/${id}`, payload);
 export const deleteDebt = (id) => http.delete(`/debts/${id}`);
 
+// Debts - contributions
+export const getDebtContributions = (debtId) =>
+  http.get(`/debts/${debtId}/contributions`);
+export const createDebtContribution = (debtId, payload) =>
+  http.post(`/debts/${debtId}/contributions`, payload);
+export const deleteDebtContribution = (debtId, cid) =>
+  http.delete(`/debts/${debtId}/contributions/${cid}`);
+
 // Goals
 export const getGoals = () => http.get(`/goals?_=${Date.now()}`);
 export const createGoal = (payload) => http.post("/goals", payload);

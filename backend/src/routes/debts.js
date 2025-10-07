@@ -1,7 +1,60 @@
 import { Router } from "express";
 import Debt from "../models/Debt.js";
+import DebtContribution from "../models/DebtContribution.js";
 
 const r = Router();
+
+// ====== CONTRIBUTIONS (góp nợ) ======
+// GET /api/debts/:id/contributions
+r.get("/:id/contributions", async (req, res, next) => {
+  try {
+    const list = await DebtContribution.find({ debtId: req.params.id })
+      .sort({ date: -1, createdAt: -1 })
+      .lean();
+    res.json(list || []);
+  } catch (e) {
+    next(e);
+  }
+});
+
+// POST /api/debts/:id/contributions
+r.post("/:id/contributions", async (req, res, next) => {
+  try {
+    let { amount, date, note } = req.body || {};
+    const amt = Number(amount);
+    if (!amt || amt <= 0)
+      return res.status(400).json({ message: "Số tiền phải > 0" });
+    if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      date = new Date(date + "T00:00:00.000Z");
+    }
+    const debt = await Debt.findById(req.params.id);
+    if (!debt) return res.status(404).json({ message: "Debt not found" });
+    const doc = await DebtContribution.create({
+      debtId: debt._id,
+      amount: amt,
+      date,
+      note,
+    });
+    res.status(201).json(doc);
+  } catch (e) {
+    next(e);
+  }
+});
+
+// DELETE /api/debts/:id/contributions/:cid
+r.delete("/:id/contributions/:cid", async (req, res, next) => {
+  try {
+    const del = await DebtContribution.findOneAndDelete({
+      _id: req.params.cid,
+      debtId: req.params.id,
+    });
+    if (!del)
+      return res.status(404).json({ message: "Contribution not found" });
+    res.json({ ok: true });
+  } catch (e) {
+    next(e);
+  }
+});
 
 r.get("/", async (req, res, next) => {
   try {

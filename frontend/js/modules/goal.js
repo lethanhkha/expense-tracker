@@ -98,9 +98,9 @@ async function render() {
         </div>
         <div class="bar"><span style="width:${pct}%"></span></div>
         <div class="actions right" style="gap:8px;margin-top:8px">
-          <button class="btn ghost toggle-contrib">📂 Xem </button>
-          <button class="btn ghost add-contrib">➕ Góp</button>
-          <button class="btn ghost withdraw-contrib">➖ Rút</button>
+          <button class="btn ghost toggle-contrib">📂 </button>
+          <button class="btn ghost add-contrib">➕ </button>
+          <button class="btn ghost withdraw-contrib">➖ </button>
           <button class="btn ghost edit-goal">✏️</button>
           <button class="btn ghost del-goal">🗑️</button>
         </div>
